@@ -1,0 +1,28 @@
+'use client'
+
+import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+
+export function BookmarkSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <Skeleton className="h-6 w-3/4" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-4 w-full mb-2" />
+        <Skeleton className="h-3 w-1/4" />
+      </CardContent>
+    </Card>
+  )
+}
+
+export function BookmarkListSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <BookmarkSkeleton key={i} />
+      ))}
+    </div>
+  )
+}
