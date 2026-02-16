@@ -35,7 +35,7 @@ export function FeaturesSection() {
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Smart Bookmark?</h2>
           <p className="text-lg text-muted-foreground">
-            Everything you need in a bookmark manager, nothing you don't
+            Everything you need in a bookmark manager, nothing you don&apos;t
           </p>
         </motion.div>
 

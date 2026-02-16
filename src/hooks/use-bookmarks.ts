@@ -7,12 +7,11 @@ import { toast } from 'sonner'
 
 export function useBookmarks(userId: string | undefined) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!userId)
   const supabase = createClient()
 
   useEffect(() => {
     if (!userId) {
-      setLoading(false)
       return
     }
 
