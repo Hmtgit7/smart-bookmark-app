@@ -19,7 +19,7 @@ A modern, production-ready bookmark manager built with Next.js, TypeScript, Supa
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 14+ with App Router
+- **Framework:** Next.js 16+ with App Router
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4
 - **UI Components:** shadcn/ui
