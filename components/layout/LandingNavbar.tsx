@@ -76,7 +76,7 @@ export function LandingNavbar() {
                                         <span>Menu</span>
                                     </SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col space-y-4 mt-8">
+                                <div className="flex flex-col space-y-4 mt-8 p-2">
                                     <Button variant="outline" asChild className="w-full" onClick={() => setOpen(false)}>
                                         <Link href="/login">Log in</Link>
                                     </Button>

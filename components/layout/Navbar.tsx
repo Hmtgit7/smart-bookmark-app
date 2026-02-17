@@ -138,11 +138,11 @@ export function Navbar({ userEmail }: NavbarProps) {
                                     <Menu className="h-6 w-6" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="right" className="w-[280px]">
+                            <SheetContent side="right" className="w-[300px]">
                                 <SheetHeader>
                                     <SheetTitle>Account</SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col space-y-4 mt-8">
+                                <div className="flex flex-col space-y-4 mt-8 p-2">
                                     <div className="flex items-center space-x-3 pb-4 border-b">
                                         <Avatar className="h-12 w-12">
                                             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
