@@ -1,6 +1,6 @@
 # 🔖 Smart Bookmarks
 
-A modern, full-stack bookmark manager built with **Next.js** and **Supabase**. Organize, search, and manage your favorite links with real-time synchronization across all your devices.
+A modern, AI-powered bookmark manager built with **Next.js 16** and **Supabase**. Organize, search, and chat with your favorite links using natural language.
 
 🔗 **Live Demo:** [smart-bookmark-app-lilac-phi.vercel.app](https://smart-bookmark-app-lilac-phi.vercel.app)
 
@@ -8,27 +8,68 @@ A modern, full-stack bookmark manager built with **Next.js** and **Supabase**. O
 
 ## ✨ Features
 
-- 🔐 **Google OAuth Authentication** — Secure, one-click sign-in with your Google account
-- ⚡ **Real-time Sync** — Changes appear instantly across all open tabs and devices
+### Core Features
+
+- 🔐 **Google OAuth Authentication** — Secure sign-in with your Google account
+- ⚡ **Real-time Sync** — Changes appear instantly across all open tabs
 - 🔍 **Smart Search** — Quickly find bookmarks by title or URL
 - 🏷️ **Categories** — Organize bookmarks with predefined or custom categories
-- 📦 **Archive System** — Archive old bookmarks without permanently deleting them
-- 🚫 **Duplicate Prevention** — Stops you from adding bookmarks with duplicate titles
-- 📄 **Pagination** — Clean, efficient pagination for large bookmark collections
-- 🎨 **Dark / Light Mode** — Toggle between themes to suit your preference
-- 📱 **Fully Responsive** — Works seamlessly on desktop, tablet, and mobile
+- 📦 **Archive System** — Archive old bookmarks without deleting them
+- 🚫 **Duplicate Prevention** — Real-time warning when a duplicate title is detected
+- 📄 **Pagination** — Clean pagination for large bookmark collections
+- 🎨 **Dark / Light Mode** — Toggle between themes
+- 📱 **Fully Responsive** — Works seamlessly on all devices
+
+### View Options
+
+- 📊 **Grid View** — Card-based layout with pagination (9 per page)
+- 📋 **List View** — Compact row layout with infinite scroll
+
+### AI Assistant 🤖
+
+- 💬 **Natural Language Chat** — Ask questions about your bookmarks in plain English
+- 🎯 **Smart Search** — _"Find my React tutorials from last month"_
+- 📅 **Time-based Queries** — _"Show bookmarks I saved yesterday"_
+- 🗂️ **Category Filtering** — _"What's in my Learning category?"_
+- ⚡ **Powered by Groq AI** — Lightning-fast responses with Llama 3.3 70B
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 16, React, TypeScript, Tailwind CSS |
-| UI Components | Shadcn/ui, Radix UI |
-| Backend & Auth | Supabase (PostgreSQL, Auth, Realtime) |
-| State Management | Zustand |
-| Deployment | Vercel |
+### Frontend
+
+| Technology              | Role             |
+| ----------------------- | ---------------- |
+| Next.js 16 (App Router) | Framework        |
+| TypeScript              | Language         |
+| Tailwind CSS            | Styling          |
+| Shadcn/ui, Radix UI     | UI Components    |
+| Zustand                 | State Management |
+| Lucide React            | Icons            |
+
+### Backend
+
+| Technology            | Role            |
+| --------------------- | --------------- |
+| Supabase (PostgreSQL) | Database        |
+| Supabase Auth         | Google OAuth    |
+| Supabase Realtime     | Live sync       |
+| Row Level Security    | Data protection |
+
+### AI & ML
+
+| Technology              | Role        |
+| ----------------------- | ----------- |
+| Groq                    | AI Provider |
+| Llama 3.3 70B Versatile | Model       |
+
+### Deployment
+
+| Technology              | Role                 |
+| ----------------------- | -------------------- |
+| Vercel                  | Hosting              |
+| Supabase Edge Functions | Serverless functions |
 
 ---
 
@@ -37,8 +78,9 @@ A modern, full-stack bookmark manager built with **Next.js** and **Supabase**. O
 ### Prerequisites
 
 - [Node.js 18+](https://nodejs.org/) and npm
-- A [Supabase](https://supabase.com/) account
-- Google OAuth credentials ([how to create them](https://console.cloud.google.com/))
+- [Supabase](https://supabase.com) account
+- Google OAuth credentials
+- [Groq API key](https://console.groq.com) (free — no credit card required)
 
 ### 1. Clone the Repository
 
@@ -58,16 +100,21 @@ npm install
 Create a `.env.local` file in the root directory:
 
 ```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Groq AI (for chatbot)
+GROQ_API_KEY=your_groq_api_key
 ```
 
 ### 4. Set Up the Database
 
-Run the following SQL in your **Supabase SQL Editor** to create the bookmarks table and configure Row Level Security:
+Run the following SQL in your **Supabase SQL Editor**:
 
 ```sql
+-- Create bookmarks table
 CREATE TABLE bookmarks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
@@ -82,6 +129,7 @@ CREATE TABLE bookmarks (
 -- Enable Row Level Security
 ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY;
 
+-- Create RLS policies
 CREATE POLICY "Users can view own bookmarks"
   ON bookmarks FOR SELECT
   USING (auth.uid() = user_id);
@@ -98,20 +146,32 @@ CREATE POLICY "Users can delete own bookmarks"
   ON bookmarks FOR DELETE
   USING (auth.uid() = user_id);
 
--- Enable real-time updates
+-- Enable Realtime
+ALTER TABLE bookmarks REPLICA IDENTITY FULL;
 ALTER PUBLICATION supabase_realtime ADD TABLE bookmarks;
+
+-- Performance indexes
+CREATE INDEX idx_bookmarks_user_id ON bookmarks(user_id);
+CREATE INDEX idx_bookmarks_archived ON bookmarks(user_id, archived);
+CREATE INDEX idx_bookmarks_category ON bookmarks(user_id, category);
 ```
 
 ### 5. Configure Google OAuth
 
 1. In your Supabase dashboard, go to **Authentication → Providers → Google**
-2. Enter your **Google Client ID** and **Client Secret**
-3. Add the following authorized redirect URI:
-   ```
-   http://localhost:3000/auth/callback
-   ```
+2. Add your **Google Client ID** and **Client Secret**
+3. Add the authorized redirect URI:
+    ```
+    http://localhost:3000/auth/callback
+    ```
 
-### 6. Run the Development Server
+### 6. Get a Groq API Key
+
+1. Sign up at [console.groq.com](https://console.groq.com) — no credit card required
+2. Create a new API key
+3. Add it to your `.env.local` file
+
+### 7. Run the Development Server
 
 ```bash
 npm run dev
@@ -130,6 +190,75 @@ npm start
 
 ---
 
+## 🎯 Key Features Explained
+
+### AI Chatbot
+
+The AI assistant uses Groq's **Llama 3.3 70B** model to understand natural language queries about your bookmarks. Example queries:
+
+- _"Find my React tutorial from last month"_
+- _"Show all bookmarks in the Development category"_
+- _"What did I save yesterday?"_
+- _"Find that GitHub repository I bookmarked"_
+
+### Real-time Sync
+
+Using Supabase Realtime, any changes — add, edit, delete, or archive — are instantly reflected across all open tabs without a page refresh.
+
+### Archive System
+
+Instead of permanently deleting bookmarks, archive them to keep your collection clean while preserving history. Archived bookmarks display their archive date.
+
+### Duplicate Prevention
+
+The app prevents duplicate bookmark titles with a real-time warning as you type, before you even hit save.
+
+---
+
+## 📁 Project Structure
+
+```
+smart-bookmark-app/
+├── app/
+│   ├── actions/          # Server actions
+│   │   ├── bookmarks.ts  # Bookmark CRUD operations
+│   │   └── chat.ts       # AI chatbot logic
+│   ├── api/              # API routes
+│   ├── auth/             # Authentication pages
+│   ├── dashboard/        # Main dashboard
+│   └── page.tsx          # Landing page
+├── components/
+│   ├── bookmarks/        # Bookmark-related components
+│   ├── chat/             # AI chatbot component
+│   ├── layout/           # Layout components
+│   └── ui/               # Shadcn UI components
+├── lib/
+│   ├── stores/           # Zustand stores
+│   └── supabase/         # Supabase client config
+└── public/               # Static assets
+```
+
+---
+
+## 🔧 Technology Decisions
+
+**Why Groq over Gemini?**
+Groq requires no credit card on the free tier, delivers 3–5× faster responses, offers higher rate limits (30+ RPM vs. 15 RPM), and has a more stable API for production use.
+
+**Why Zustand?**
+At just 1.2KB, Zustand has a minimal footprint, a simple API, zero boilerplate, and handles real-time state updates cleanly.
+
+**Why Supabase?**
+Supabase bundles a PostgreSQL database, built-in authentication, real-time subscriptions, and row-level security into a single platform that's easy to scale.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+---
+
 ## 📝 License
 
 This project is licensed under the **MIT License** — free to use for personal or commercial purposes.
@@ -141,7 +270,14 @@ This project is licensed under the **MIT License** — free to use for personal 
 **Hemant Gehlod**
 
 - GitHub: [@Hmtgit7](https://github.com/Hmtgit7)
+- LinkedIn: [hemant-gehlod](https://www.linkedin.com/in/hemant-gehlod/)
 
 ---
 
-<div align="center">Made with ❤️ using Next.js and Supabase</div>
+## 🙏 Acknowledgments
+
+[Next.js](https://nextjs.org) · [Supabase](https://supabase.com) · [Groq](https://groq.com) · [Shadcn/ui](https://ui.shadcn.com) · [Vercel](https://vercel.com)
+
+---
+
+<div align="center">Made with ❤️ using Next.js, Supabase, and Groq AI</div>
