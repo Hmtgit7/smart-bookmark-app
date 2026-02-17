@@ -1,4 +1,3 @@
-// components/bookmarks/BookmarkPagination.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";

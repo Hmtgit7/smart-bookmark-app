@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
@@ -13,6 +12,21 @@ export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "Smart Bookmarks - Organize Your Web",
   description: "A beautiful and smart way to manage your bookmarks with real-time sync",
+  icons: {
+    icon: [
+      {
+        url: '/icon',
+        type: 'image/png',
+      },
+    ],
+    apple: [
+      {
+        url: '/apple-icon',
+        type: 'image/png',
+      },
+    ],
+  },
+  manifest: '/manifest.json', // Optional: for PWA support
 };
 
 const geistSans = Geist({

@@ -1,4 +1,3 @@
-// lib/stores/bookmark-store.ts
 import { create } from 'zustand';
 
 export interface Bookmark {

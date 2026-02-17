@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";

@@ -1,4 +1,3 @@
-// // app/(auth)/login/page.tsx
 // import { Suspense } from "react";
 // import Link from "next/link";
 // import { Button } from "@/components/ui/button";
@@ -131,7 +130,6 @@
 //   );
 // }
 
-// app/(auth)/login/page.tsx
 import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

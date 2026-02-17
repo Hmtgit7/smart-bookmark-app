@@ -1,4 +1,3 @@
-// components/icons/GoogleIcon.tsx
 export function GoogleIcon({ className }: { className?: string }) {
     return (
         <svg

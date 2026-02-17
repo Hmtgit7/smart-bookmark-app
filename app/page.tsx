@@ -1,4 +1,3 @@
-// app/page.tsx
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";

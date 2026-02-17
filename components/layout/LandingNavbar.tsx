@@ -1,4 +1,3 @@
-// components/layout/LandingNavbar.tsx
 "use client";
 
 import { useState } from "react";

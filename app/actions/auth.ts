@@ -1,5 +1,4 @@
-// // app/actions/auth.ts
-// "use server";
+"use server";
 
 // import { createClient } from "@/lib/supabase/server";
 // import { redirect } from "next/navigation";
@@ -75,7 +74,6 @@
 //     redirect("/");
 // }
 
-// app/actions/auth.ts
 "use server";
 
 import { createClient } from "@/lib/supabase/server";

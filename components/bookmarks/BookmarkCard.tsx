@@ -1,4 +1,3 @@
-// components/bookmarks/BookmarkCard.tsx
 "use client";
 
 import { useState, useTransition } from "react";
