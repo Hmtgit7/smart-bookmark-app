@@ -55,15 +55,11 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         const state = get();
         const exists = state.bookmarks.some(b => b.id === bookmark.id);
         if (!exists) {
-            console.log("Store: Adding bookmark", bookmark.id);
             set({ bookmarks: [bookmark, ...state.bookmarks] });
-        } else {
-            console.log("Store: Bookmark already exists", bookmark.id);
         }
     },
 
     updateBookmark: (id, updatedData) => {
-        console.log("Store: Updating bookmark", id);
         set((state) => ({
             bookmarks: state.bookmarks.map((bookmark) =>
                 bookmark.id === id ? { ...bookmark, ...updatedData } : bookmark
@@ -72,7 +68,6 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     },
 
     deleteBookmark: (id) => {
-        console.log("Store: Deleting bookmark", id);
         set((state) => ({
             bookmarks: state.bookmarks.filter((bookmark) => bookmark.id !== id),
         }));

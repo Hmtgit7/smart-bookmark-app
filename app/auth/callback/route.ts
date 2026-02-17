@@ -10,7 +10,6 @@ export async function GET(request: Request) {
 
     // Handle OAuth errors
     if (error) {
-        console.error("OAuth error:", error, error_description);
         return NextResponse.redirect(
             `${origin}/login?error=${encodeURIComponent(error_description || "Authentication failed")}`
         );
@@ -23,16 +22,13 @@ export async function GET(request: Request) {
             const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
             if (exchangeError) {
-                console.error("Session exchange error:", exchangeError);
                 return NextResponse.redirect(`${origin}/login?error=Authentication failed`);
             }
 
             if (data.session) {
-                console.log("✅ User authenticated:", data.user?.email);
                 return NextResponse.redirect(`${origin}/dashboard`);
             }
         } catch (err) {
-            console.error("Unexpected error:", err);
             return NextResponse.redirect(`${origin}/login?error=Authentication failed`);
         }
     }

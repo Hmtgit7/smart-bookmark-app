@@ -71,11 +71,9 @@ export function AddBookmarkDialog() {
         formData.set("category", finalCategory);
 
         startTransition(async () => {
-            console.log("📤 Submitting bookmark...");
             const result = await addBookmarkAction(formData);
 
             if (result.success && result.data) {
-                console.log("✅ Bookmark saved to database", result.data);
                 addBookmark(result.data);
                 toast.success(result.message);
                 setOpen(false);
@@ -84,7 +82,6 @@ export function AddBookmarkDialog() {
                 setCategory("Uncategorized");
                 setCustomCategory("");
             } else {
-                console.error("❌ Failed to save bookmark:", result.error);
                 toast.error(result.error || "Failed to add bookmark");
             }
         });

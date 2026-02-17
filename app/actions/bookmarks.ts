@@ -39,7 +39,6 @@ export async function addBookmarkAction(formData: FormData) {
         .single();
 
     if (error) {
-        console.error("Error adding bookmark:", error);
         return { error: "Failed to add bookmark" };
     }
 
@@ -84,7 +83,6 @@ export async function updateBookmarkAction(bookmarkId: string, formData: FormDat
         .single();
 
     if (error) {
-        console.error("Error updating bookmark:", error);
         return { error: "Failed to update bookmark" };
     }
 
@@ -111,7 +109,6 @@ export async function archiveBookmarkAction(bookmarkId: string) {
         .single();
 
     if (error) {
-        console.error("Error archiving bookmark:", error);
         return { error: "Failed to archive bookmark" };
     }
 
@@ -138,7 +135,6 @@ export async function unarchiveBookmarkAction(bookmarkId: string) {
         .single();
 
     if (error) {
-        console.error("Error unarchiving bookmark:", error);
         return { error: "Failed to unarchive bookmark" };
     }
 
@@ -160,7 +156,6 @@ export async function deleteBookmarkAction(bookmarkId: string) {
         .eq("user_id", user.id);
 
     if (error) {
-        console.error("Error deleting bookmark:", error);
         return { error: "Failed to delete bookmark" };
     }
 

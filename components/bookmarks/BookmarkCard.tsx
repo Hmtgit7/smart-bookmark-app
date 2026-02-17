@@ -42,15 +42,12 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
         if (isDeleting) return;
 
         startDeleteTransition(async () => {
-            console.log("🗑️ Deleting bookmark...");
             const result = await deleteBookmarkAction(id);
 
             if (result.success) {
-                console.log("✅ Bookmark deleted from database");
                 toast.success(result.message);
                 setAlertOpen(false);
             } else {
-                console.error("❌ Failed to delete bookmark:", result.error);
                 toast.error(result.error || "Failed to delete bookmark");
             }
         });
@@ -60,17 +57,14 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
         if (isArchiving) return;
 
         startArchiveTransition(async () => {
-            console.log(archived ? "📦 Unarchiving bookmark..." : "📥 Archiving bookmark...");
             const result = archived
                 ? await unarchiveBookmarkAction(id)
                 : await archiveBookmarkAction(id);
 
             if (result.success && result.data) {
-                console.log("✅ Bookmark archive status updated");
                 updateBookmark(id, result.data);
                 toast.success(result.message);
             } else {
-                console.error("❌ Failed to update archive status:", result.error);
                 toast.error(result.error || "Failed to update bookmark");
             }
         });

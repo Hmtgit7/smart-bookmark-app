@@ -33,7 +33,6 @@ export function BookmarkList({ userId }: BookmarkListProps) {
 
         // Initial fetch
         async function fetchBookmarks() {
-            console.log("🔍 Fetching bookmarks for user:", userId);
             const { data, error } = await supabase
                 .from("bookmarks")
                 .select("*")
@@ -41,10 +40,8 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                 .order("created_at", { ascending: false });
 
             if (!error && data) {
-                console.log("✅ Fetched", data.length, "bookmarks");
                 setBookmarks(data);
             } else if (error) {
-                console.error("❌ Error fetching bookmarks:", error);
                 setBookmarks([]);
             }
         }
@@ -52,8 +49,6 @@ export function BookmarkList({ userId }: BookmarkListProps) {
         fetchBookmarks();
 
         // Setup real-time subscription
-        console.log("🔌 Setting up real-time subscription for user:", userId);
-
         channel = supabase
             .channel(`public:bookmarks:user_id=eq.${userId}`, {
                 config: {
@@ -70,7 +65,6 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                     filter: `user_id=eq.${userId}`,
                 },
                 (payload) => {
-                    console.log("🆕 INSERT event received:", payload);
                     addBookmark(payload.new as any);
                 }
             )
@@ -83,7 +77,6 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                     filter: `user_id=eq.${userId}`,
                 },
                 (payload) => {
-                    console.log("✏️ UPDATE event received:", payload);
                     updateBookmark(payload.new.id, payload.new as any);
                 }
             )
@@ -96,24 +89,14 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                     filter: `user_id=eq.${userId}`,
                 },
                 (payload) => {
-                    console.log("🗑️ DELETE event received:", payload);
                     deleteBookmark(payload.old.id);
                 }
             )
-            .subscribe((status, err) => {
-                if (status === "SUBSCRIBED") {
-                    console.log("✅ Real-time subscription active!");
-                } else if (status === "CHANNEL_ERROR") {
-                    console.error("❌ Real-time subscription error:", err);
-                } else if (status === "TIMED_OUT") {
-                    console.error("⏱️ Real-time subscription timed out");
-                } else {
-                    console.log("📡 Subscription status:", status);
-                }
+            .subscribe((status) => {
+                // Subscription status handling - no logging needed
             });
 
         return () => {
-            console.log("🧹 Cleaning up subscription");
             if (channel) {
                 supabase.removeChannel(channel);
             }

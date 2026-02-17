@@ -87,16 +87,13 @@ export function EditBookmarkDialog({
         formData.set("category", finalCategory);
 
         startTransition(async () => {
-            console.log("📝 Updating bookmark...");
             const result = await updateBookmarkAction(bookmarkId, formData);
 
             if (result.success && result.data) {
-                console.log("✅ Bookmark updated in database");
                 updateBookmark(bookmarkId, result.data);
                 toast.success(result.message);
                 setOpen(false);
             } else {
-                console.error("❌ Failed to update bookmark:", result.error);
                 toast.error(result.error || "Failed to update bookmark");
             }
         });

@@ -96,7 +96,6 @@ export async function signInWithGoogleAction() {
     });
 
     if (error) {
-        console.error("Google OAuth error:", error);
         redirect("/login?error=Could not authenticate with Google");
     }
 
