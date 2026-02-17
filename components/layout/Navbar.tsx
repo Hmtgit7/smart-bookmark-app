@@ -98,7 +98,7 @@ export function Navbar({ userEmail }: NavbarProps) {
                                     </Avatar>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuContent align="end" className="w-60">
                                 <div className="flex items-center justify-start gap-2 p-2">
                                     <div className="flex flex-col space-y-1">
                                         <p className="text-sm font-medium truncate">{userEmail}</p>
@@ -142,8 +142,8 @@ export function Navbar({ userEmail }: NavbarProps) {
                                 <SheetHeader>
                                     <SheetTitle>Account</SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col space-y-4 mt-8 p-2">
-                                    <div className="flex items-center space-x-3 pb-4 border-b">
+                                <div className="flex flex-col space-y-4 mt-8">
+                                    <div className="flex items-center space-x-3 pb-4 border-b p-2">
                                         <Avatar className="h-12 w-12">
                                             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                                                 {userEmail ? getInitials(userEmail) : "U"}
@@ -154,7 +154,7 @@ export function Navbar({ userEmail }: NavbarProps) {
                                             <p className="text-xs text-muted-foreground">Your account</p>
                                         </div>
                                     </div>
-                                    <form action={signOutAction}>
+                                    <form action={signOutAction} className="px-2">
                                         <Button type="submit" variant="outline" className="w-full" onClick={() => setOpen(false)}>
                                             <LogOut className="mr-2 h-4 w-4" />
                                             Log out
