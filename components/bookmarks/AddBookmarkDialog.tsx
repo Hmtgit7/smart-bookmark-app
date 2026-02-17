@@ -52,7 +52,6 @@ export function AddBookmarkDialog() {
     const addBookmark = useBookmarkStore((state) => state.addBookmark);
     const checkDuplicateTitle = useBookmarkStore((state) => state.checkDuplicateTitle);
 
-    // Check for duplicate title
     useEffect(() => {
         if (title.trim()) {
             setIsDuplicate(checkDuplicateTitle(title));

@@ -8,19 +8,18 @@ import { BookmarkPagination } from "./BookmarkPagination";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, BookmarkX } from "lucide-react";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 
 interface BookmarkListProps {
   userId: string;
 }
 
 export function BookmarkList({ userId }: BookmarkListProps) {
-  const { 
-    isLoading, 
+  const {
+    isLoading,
     viewMode,
-    setBookmarks, 
-    addBookmark, 
-    updateBookmark, 
+    setBookmarks,
+    addBookmark,
+    updateBookmark,
     deleteBookmark,
     getFilteredBookmarks,
     searchQuery,
@@ -31,7 +30,6 @@ export function BookmarkList({ userId }: BookmarkListProps) {
 
   useEffect(() => {
     const supabase = createClient();
-    let channel: RealtimeChannel;
 
     async function fetchBookmarks() {
       const { data, error } = await supabase
@@ -49,57 +47,36 @@ export function BookmarkList({ userId }: BookmarkListProps) {
 
     fetchBookmarks();
 
-    channel = supabase
-      .channel(`public:bookmarks:user_id=eq.${userId}`, {
-        config: {
-          broadcast: { self: false },
-          presence: { key: userId },
-        },
-      })
+    const channel = supabase
+      .channel('bookmarks-changes')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "INSERT",
-          schema: "public",
-          table: "bookmarks",
+          event: '*',
+          schema: 'public',
+          table: 'bookmarks',
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          addBookmark(payload.new as any);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "bookmarks",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          updateBookmark(payload.new.id, payload.new as any);
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "bookmarks",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          deleteBookmark(payload.old.id);
+          switch (payload.eventType) {
+            case 'INSERT':
+              addBookmark(payload.new as any);
+              break;
+            case 'UPDATE':
+              updateBookmark(payload.new.id, payload.new as any);
+              break;
+            case 'DELETE':
+              deleteBookmark(payload.old.id);
+              break;
+          }
         }
       )
       .subscribe();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, setBookmarks, addBookmark, updateBookmark, deleteBookmark]);
 
   if (isLoading) {
     return (
@@ -113,7 +90,6 @@ export function BookmarkList({ userId }: BookmarkListProps) {
     <div>
       <BookmarkFilters />
 
-      {/* Render based on view mode */}
       {viewMode === 'list' ? (
         <BookmarkListView />
       ) : (
@@ -124,8 +100,8 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                 <BookmarkX className="h-10 w-10 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2">
-                {searchQuery || selectedCategory !== 'All' 
-                  ? "No bookmarks found" 
+                {searchQuery || selectedCategory !== 'All'
+                  ? "No bookmarks found"
                   : "No bookmarks yet"}
               </h3>
               <p className="text-muted-foreground max-w-sm">

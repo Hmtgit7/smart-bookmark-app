@@ -14,7 +14,6 @@ export async function addBookmarkAction(formData: FormData) {
         return { error: "Unauthorized" };
     }
 
-    // Check for duplicate title
     const { data: existingBookmarks } = await supabase
         .from("bookmarks")
         .select("id")
@@ -57,7 +56,6 @@ export async function updateBookmarkAction(bookmarkId: string, formData: FormDat
         return { error: "Unauthorized" };
     }
 
-    // Check for duplicate title (excluding current bookmark)
     const { data: existingBookmarks } = await supabase
         .from("bookmarks")
         .select("id")

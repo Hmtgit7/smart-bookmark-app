@@ -68,7 +68,6 @@ export function EditBookmarkDialog({
     const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
     const checkDuplicateTitle = useBookmarkStore((state) => state.checkDuplicateTitle);
 
-    // Check for duplicate title (excluding current bookmark)
     useEffect(() => {
         if (title.trim() && title !== initialTitle) {
             setIsDuplicate(checkDuplicateTitle(title, bookmarkId));
