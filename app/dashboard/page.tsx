@@ -1,9 +1,11 @@
+
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookmarkList } from "@/components/bookmarks/BookmarkList";
 import { AddBookmarkDialog } from "@/components/bookmarks/AddBookmarkDialog";
+import { ChatBot } from "@/components/chat/ChatBot"; // Add this
 import { Loader2 } from "lucide-react";
 
 async function DashboardContent() {
@@ -31,6 +33,9 @@ async function DashboardContent() {
 
                 <BookmarkList userId={user.id} />
             </main>
+
+            {/* Add ChatBot */}
+            <ChatBot />
         </>
     );
 }
