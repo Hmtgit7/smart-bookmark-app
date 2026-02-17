@@ -20,6 +20,7 @@ interface BookmarkStore {
     currentPage: number;
     itemsPerPage: number;
     showArchived: boolean;
+    viewMode: 'grid' | 'list'; // New field
 
     setBookmarks: (bookmarks: Bookmark[]) => void;
     addBookmark: (bookmark: Bookmark) => void;
@@ -31,9 +32,11 @@ interface BookmarkStore {
     setSortBy: (sortBy: 'newest' | 'oldest' | 'alphabetical') => void;
     setCurrentPage: (page: number) => void;
     setShowArchived: (show: boolean) => void;
+    setViewMode: (mode: 'grid' | 'list') => void; // New action
 
     // Computed values
     getFilteredBookmarks: () => Bookmark[];
+    getAllFilteredBookmarks: () => Bookmark[]; // New - for list view
     getCategories: () => string[];
     getTotalPages: () => number;
     checkDuplicateTitle: (title: string, excludeId?: string) => boolean;
@@ -48,6 +51,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     currentPage: 1,
     itemsPerPage: 9,
     showArchived: false,
+    viewMode: 'grid', // Default to grid view
 
     setBookmarks: (bookmarks) => set({ bookmarks, isLoading: false }),
 
@@ -79,7 +83,9 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     setSortBy: (sortBy) => set({ sortBy, currentPage: 1 }),
     setCurrentPage: (page) => set({ currentPage: page }),
     setShowArchived: (show) => set({ showArchived: show, currentPage: 1 }),
+    setViewMode: (mode) => set({ viewMode: mode, currentPage: 1 }), // New
 
+    // Get filtered and paginated bookmarks (for grid view)
     getFilteredBookmarks: () => {
         const state = get();
         let filtered = [...state.bookmarks];
@@ -118,10 +124,56 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             }
         });
 
-        // Paginate
-        const start = (state.currentPage - 1) * state.itemsPerPage;
-        const end = start + state.itemsPerPage;
-        return filtered.slice(start, end);
+        // Paginate (only for grid view)
+        if (state.viewMode === 'grid') {
+            const start = (state.currentPage - 1) * state.itemsPerPage;
+            const end = start + state.itemsPerPage;
+            return filtered.slice(start, end);
+        }
+
+        return filtered;
+    },
+
+    // Get all filtered bookmarks without pagination (for list view)
+    getAllFilteredBookmarks: () => {
+        const state = get();
+        let filtered = [...state.bookmarks];
+
+        // Filter by archived status
+        filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
+
+        // Filter by search query
+        if (state.searchQuery) {
+            const query = state.searchQuery.toLowerCase();
+            filtered = filtered.filter(
+                (bookmark) =>
+                    bookmark.title.toLowerCase().includes(query) ||
+                    bookmark.url.toLowerCase().includes(query)
+            );
+        }
+
+        // Filter by category
+        if (state.selectedCategory !== 'All') {
+            filtered = filtered.filter(
+                (bookmark) => bookmark.category === state.selectedCategory
+            );
+        }
+
+        // Sort
+        filtered.sort((a, b) => {
+            switch (state.sortBy) {
+                case 'newest':
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                case 'oldest':
+                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                case 'alphabetical':
+                    return a.title.localeCompare(b.title);
+                default:
+                    return 0;
+            }
+        });
+
+        return filtered;
     },
 
     getCategories: () => {

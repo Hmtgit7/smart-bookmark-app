@@ -9,7 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Search, SlidersHorizontal, Archive, Inbox } from "lucide-react";
+import { Search, SlidersHorizontal, Archive, Inbox, Grid3x3, List } from "lucide-react";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,11 +19,13 @@ export function BookmarkFilters() {
         selectedCategory,
         sortBy,
         showArchived,
+        viewMode,
         bookmarks,
         setSearchQuery,
         setSelectedCategory,
         setSortBy,
         setShowArchived,
+        setViewMode,
         getCategories
     } = useBookmarkStore();
 
@@ -32,7 +34,7 @@ export function BookmarkFilters() {
 
     return (
         <div className="space-y-4 mb-6">
-            {/* Archive Toggle */}
+            {/* Top Row: Archive Toggle + View Mode */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Button
@@ -55,6 +57,24 @@ export function BookmarkFilters() {
                                 {archivedCount}
                             </Badge>
                         )}
+                    </Button>
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant={viewMode === 'grid' ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => setViewMode('grid')}
+                    >
+                        <Grid3x3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant={viewMode === 'list' ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => setViewMode('list')}
+                    >
+                        <List className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
