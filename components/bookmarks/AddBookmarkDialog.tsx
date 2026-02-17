@@ -1,7 +1,7 @@
 // components/bookmarks/AddBookmarkDialog.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { addBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
@@ -25,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const PREDEFINED_CATEGORIES = [
     "Uncategorized",
@@ -47,12 +48,24 @@ export function AddBookmarkDialog() {
     const [url, setUrl] = useState("");
     const [category, setCategory] = useState("Uncategorized");
     const [customCategory, setCustomCategory] = useState("");
+    const [isDuplicate, setIsDuplicate] = useState(false);
+
     const addBookmark = useBookmarkStore((state) => state.addBookmark);
+    const checkDuplicateTitle = useBookmarkStore((state) => state.checkDuplicateTitle);
+
+    // Check for duplicate title
+    useEffect(() => {
+        if (title.trim()) {
+            setIsDuplicate(checkDuplicateTitle(title));
+        } else {
+            setIsDuplicate(false);
+        }
+    }, [title, checkDuplicateTitle]);
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
-        if (isPending) return;
+        if (isPending || isDuplicate) return;
 
         const formData = new FormData(e.currentTarget);
         const finalCategory = category === "Custom" ? customCategory : category;
@@ -64,7 +77,6 @@ export function AddBookmarkDialog() {
 
             if (result.success && result.data) {
                 console.log("✅ Bookmark saved to database", result.data);
-                // Optimistic update - add immediately to UI
                 addBookmark(result.data);
                 toast.success(result.message);
                 setOpen(false);
@@ -88,6 +100,7 @@ export function AddBookmarkDialog() {
                     setUrl("");
                     setCategory("Uncategorized");
                     setCustomCategory("");
+                    setIsDuplicate(false);
                 }
             }
         }}>
@@ -116,7 +129,16 @@ export function AddBookmarkDialog() {
                                 placeholder="My Favorite Website"
                                 required
                                 disabled={isPending}
+                                className={isDuplicate ? "border-destructive" : ""}
                             />
+                            {isDuplicate && (
+                                <Alert variant="destructive" className="py-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="text-xs">
+                                        A bookmark with this title already exists
+                                    </AlertDescription>
+                                </Alert>
+                            )}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="url">URL</Label>
@@ -170,7 +192,7 @@ export function AddBookmarkDialog() {
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isPending}>
+                        <Button type="submit" disabled={isPending || isDuplicate}>
                             {isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

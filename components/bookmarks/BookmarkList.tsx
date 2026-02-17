@@ -159,6 +159,8 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                                 title={bookmark.title}
                                 url={bookmark.url}
                                 category={bookmark.category}
+                                archived={bookmark.archived}
+                                archivedAt={bookmark.archived_at}
                                 createdAt={bookmark.created_at}
                             />
                         ))}

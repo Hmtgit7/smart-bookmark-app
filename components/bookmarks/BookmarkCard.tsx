@@ -5,8 +5,8 @@ import { useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Trash2, Loader2, Bookmark } from "lucide-react";
-import { deleteBookmarkAction } from "@/app/actions/bookmarks";
+import { ExternalLink, Trash2, Loader2, Bookmark, Archive, ArchiveRestore } from "lucide-react";
+import { deleteBookmarkAction, archiveBookmarkAction, unarchiveBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -20,18 +20,24 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { EditBookmarkDialog } from "./EditBookmarkDialog";
+import { useBookmarkStore } from "@/lib/stores/bookmark-store";
 
 interface BookmarkCardProps {
     id: string;
     title: string;
     url: string;
     category: string;
+    archived: boolean;
+    archivedAt: string | null;
     createdAt: string;
 }
 
-export function BookmarkCard({ id, title, url, category, createdAt }: BookmarkCardProps) {
+export function BookmarkCard({ id, title, url, category, archived, archivedAt, createdAt }: BookmarkCardProps) {
     const [isDeleting, startDeleteTransition] = useTransition();
+    const [isArchiving, startArchiveTransition] = useTransition();
     const [alertOpen, setAlertOpen] = useState(false);
+
+    const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
 
     function handleDelete() {
         if (isDeleting) return;
@@ -47,6 +53,26 @@ export function BookmarkCard({ id, title, url, category, createdAt }: BookmarkCa
             } else {
                 console.error("❌ Failed to delete bookmark:", result.error);
                 toast.error(result.error || "Failed to delete bookmark");
+            }
+        });
+    }
+
+    function handleArchive() {
+        if (isArchiving) return;
+
+        startArchiveTransition(async () => {
+            console.log(archived ? "📦 Unarchiving bookmark..." : "📥 Archiving bookmark...");
+            const result = archived
+                ? await unarchiveBookmarkAction(id)
+                : await archiveBookmarkAction(id);
+
+            if (result.success && result.data) {
+                console.log("✅ Bookmark archive status updated");
+                updateBookmark(id, result.data);
+                toast.success(result.message);
+            } else {
+                console.error("❌ Failed to update archive status:", result.error);
+                toast.error(result.error || "Failed to update bookmark");
             }
         });
     }
@@ -78,7 +104,7 @@ export function BookmarkCard({ id, title, url, category, createdAt }: BookmarkCa
     };
 
     return (
-        <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2">
+        <Card className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 ${archived ? 'opacity-75' : ''}`}>
             <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                     {/* Favicon */}
@@ -99,28 +125,48 @@ export function BookmarkCard({ id, title, url, category, createdAt }: BookmarkCa
 
                     {/* Actions */}
                     <div className="flex items-center space-x-2 ml-4">
+                        {!archived && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                asChild
+                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink className="h-4 w-4" />
+                                </a>
+                            </Button>
+                        )}
+
+                        {!archived && (
+                            <EditBookmarkDialog
+                                bookmarkId={id}
+                                initialTitle={title}
+                                initialUrl={url}
+                                initialCategory={category}
+                            />
+                        )}
+
                         <Button
                             variant="ghost"
                             size="icon"
-                            asChild
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={handleArchive}
+                            disabled={isArchiving}
                         >
-                            <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <ExternalLink className="h-4 w-4" />
-                            </a>
+                            {isArchiving ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : archived ? (
+                                <ArchiveRestore className="h-4 w-4" />
+                            ) : (
+                                <Archive className="h-4 w-4" />
+                            )}
                         </Button>
-
-                        <EditBookmarkDialog
-                            bookmarkId={id}
-                            initialTitle={title}
-                            initialUrl={url}
-                            initialCategory={category}
-                        />
 
                         <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
                             <AlertDialogTrigger asChild>
@@ -185,12 +231,23 @@ export function BookmarkCard({ id, title, url, category, createdAt }: BookmarkCa
                         <ExternalLink className="w-3 h-3 flex-shrink-0" />
                     </a>
 
-                    <div className="flex items-center justify-between pt-2">
-                        <Badge variant="secondary" className="text-xs">
-                            {category}
-                        </Badge>
+                    <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-xs">
+                                {category}
+                            </Badge>
+                            {archived && (
+                                <Badge variant="outline" className="text-xs">
+                                    Archived
+                                </Badge>
+                            )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
-                            {formatDate(createdAt)}
+                            {archived && archivedAt ? (
+                                <>Archived {formatDate(archivedAt)}</>
+                            ) : (
+                                <>Added {formatDate(createdAt)}</>
+                            )}
                         </p>
                     </div>
                 </div>

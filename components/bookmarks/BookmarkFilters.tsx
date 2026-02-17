@@ -10,24 +10,56 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Archive, Inbox } from "lucide-react";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import { Badge } from "@/components/ui/badge";
 
 export function BookmarkFilters() {
     const {
         searchQuery,
         selectedCategory,
         sortBy,
+        showArchived,
+        bookmarks,
         setSearchQuery,
         setSelectedCategory,
         setSortBy,
+        setShowArchived,
         getCategories
     } = useBookmarkStore();
 
     const categories = getCategories();
+    const archivedCount = bookmarks.filter(b => b.archived).length;
 
     return (
         <div className="space-y-4 mb-6">
+            {/* Archive Toggle */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant={!showArchived ? "default" : "outline"}
+                        onClick={() => setShowArchived(false)}
+                        className="gap-2"
+                    >
+                        <Inbox className="h-4 w-4" />
+                        Active
+                    </Button>
+                    <Button
+                        variant={showArchived ? "default" : "outline"}
+                        onClick={() => setShowArchived(true)}
+                        className="gap-2"
+                    >
+                        <Archive className="h-4 w-4" />
+                        Archived
+                        {archivedCount > 0 && (
+                            <Badge variant="secondary" className="ml-1">
+                                {archivedCount}
+                            </Badge>
+                        )}
+                    </Button>
+                </div>
+            </div>
+
             {/* Search Bar */}
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

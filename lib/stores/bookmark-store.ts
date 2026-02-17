@@ -6,6 +6,8 @@ export interface Bookmark {
     title: string;
     url: string;
     category: string;
+    archived: boolean;
+    archived_at: string | null;
     created_at: string;
     user_id: string;
 }
@@ -18,6 +20,7 @@ interface BookmarkStore {
     sortBy: 'newest' | 'oldest' | 'alphabetical';
     currentPage: number;
     itemsPerPage: number;
+    showArchived: boolean;
 
     setBookmarks: (bookmarks: Bookmark[]) => void;
     addBookmark: (bookmark: Bookmark) => void;
@@ -28,11 +31,13 @@ interface BookmarkStore {
     setSelectedCategory: (category: string) => void;
     setSortBy: (sortBy: 'newest' | 'oldest' | 'alphabetical') => void;
     setCurrentPage: (page: number) => void;
+    setShowArchived: (show: boolean) => void;
 
     // Computed values
     getFilteredBookmarks: () => Bookmark[];
     getCategories: () => string[];
     getTotalPages: () => number;
+    checkDuplicateTitle: (title: string, excludeId?: string) => boolean;
 }
 
 export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
@@ -43,6 +48,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     sortBy: 'newest',
     currentPage: 1,
     itemsPerPage: 9,
+    showArchived: false,
 
     setBookmarks: (bookmarks) => set({ bookmarks, isLoading: false }),
 
@@ -78,10 +84,14 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     setSelectedCategory: (category) => set({ selectedCategory: category, currentPage: 1 }),
     setSortBy: (sortBy) => set({ sortBy, currentPage: 1 }),
     setCurrentPage: (page) => set({ currentPage: page }),
+    setShowArchived: (show) => set({ showArchived: show, currentPage: 1 }),
 
     getFilteredBookmarks: () => {
         const state = get();
         let filtered = [...state.bookmarks];
+
+        // Filter by archived status
+        filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
 
         // Filter by search query
         if (state.searchQuery) {
@@ -122,13 +132,20 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
     getCategories: () => {
         const state = get();
-        const categories = new Set(state.bookmarks.map(b => b.category));
+        const categories = new Set(
+            state.bookmarks
+                .filter(b => b.archived === state.showArchived)
+                .map(b => b.category)
+        );
         return ['All', ...Array.from(categories).sort()];
     },
 
     getTotalPages: () => {
         const state = get();
         let filtered = [...state.bookmarks];
+
+        // Filter by archived status
+        filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
 
         if (state.searchQuery) {
             const query = state.searchQuery.toLowerCase();
@@ -146,5 +163,15 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         }
 
         return Math.ceil(filtered.length / state.itemsPerPage);
+    },
+
+    checkDuplicateTitle: (title: string, excludeId?: string) => {
+        const state = get();
+        return state.bookmarks.some(
+            (bookmark) =>
+                bookmark.title.toLowerCase() === title.toLowerCase() &&
+                bookmark.id !== excludeId &&
+                !bookmark.archived
+        );
     },
 }));

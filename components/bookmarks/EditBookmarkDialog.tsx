@@ -1,7 +1,7 @@
 // components/bookmarks/EditBookmarkDialog.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Loader2 } from "lucide-react";
+import { Pencil, Loader2, AlertCircle } from "lucide-react";
 import { updateBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
+import { useBookmarkStore } from "@/lib/stores/bookmark-store";
 import {
     Select,
     SelectContent,
@@ -24,7 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const PREDEFINED_CATEGORIES = [
     "Uncategorized",
@@ -63,13 +64,24 @@ export function EditBookmarkDialog({
     const [customCategory, setCustomCategory] = useState(
         PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory
     );
+    const [isDuplicate, setIsDuplicate] = useState(false);
 
     const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
+    const checkDuplicateTitle = useBookmarkStore((state) => state.checkDuplicateTitle);
+
+    // Check for duplicate title (excluding current bookmark)
+    useEffect(() => {
+        if (title.trim() && title !== initialTitle) {
+            setIsDuplicate(checkDuplicateTitle(title, bookmarkId));
+        } else {
+            setIsDuplicate(false);
+        }
+    }, [title, initialTitle, bookmarkId, checkDuplicateTitle]);
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
-        if (isPending) return;
+        if (isPending || isDuplicate) return;
 
         const formData = new FormData(e.currentTarget);
         const finalCategory = category === "Custom" ? customCategory : category;
@@ -100,6 +112,7 @@ export function EditBookmarkDialog({
                     setUrl(initialUrl);
                     setCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom");
                     setCustomCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory);
+                    setIsDuplicate(false);
                 }
             }
         }}>
@@ -136,7 +149,16 @@ export function EditBookmarkDialog({
                                 placeholder="My Favorite Website"
                                 required
                                 disabled={isPending}
+                                className={isDuplicate ? "border-destructive" : ""}
                             />
+                            {isDuplicate && (
+                                <Alert variant="destructive" className="py-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="text-xs">
+                                        A bookmark with this title already exists
+                                    </AlertDescription>
+                                </Alert>
+                            )}
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="edit-url">URL</Label>
@@ -190,7 +212,7 @@ export function EditBookmarkDialog({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isPending}>
+                        <Button type="submit" disabled={isPending || isDuplicate}>
                             {isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
