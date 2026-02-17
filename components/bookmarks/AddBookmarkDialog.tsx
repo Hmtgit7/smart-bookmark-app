@@ -18,12 +18,35 @@ import { Plus, Loader2 } from "lucide-react";
 import { addBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+
+const PREDEFINED_CATEGORIES = [
+    "Uncategorized",
+    "Work",
+    "Personal",
+    "Learning",
+    "Shopping",
+    "Entertainment",
+    "News",
+    "Social Media",
+    "Development",
+    "Design",
+    "Other",
+];
 
 export function AddBookmarkDialog() {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [title, setTitle] = useState("");
     const [url, setUrl] = useState("");
+    const [category, setCategory] = useState("Uncategorized");
+    const [customCategory, setCustomCategory] = useState("");
     const addBookmark = useBookmarkStore((state) => state.addBookmark);
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -32,18 +55,25 @@ export function AddBookmarkDialog() {
         if (isPending) return;
 
         const formData = new FormData(e.currentTarget);
+        const finalCategory = category === "Custom" ? customCategory : category;
+        formData.set("category", finalCategory);
 
         startTransition(async () => {
+            console.log("📤 Submitting bookmark...");
             const result = await addBookmarkAction(formData);
 
             if (result.success && result.data) {
-                // Optimistically update UI
+                console.log("✅ Bookmark saved to database", result.data);
+                // Optimistic update - add immediately to UI
                 addBookmark(result.data);
                 toast.success(result.message);
                 setOpen(false);
                 setTitle("");
                 setUrl("");
+                setCategory("Uncategorized");
+                setCustomCategory("");
             } else {
+                console.error("❌ Failed to save bookmark:", result.error);
                 toast.error(result.error || "Failed to add bookmark");
             }
         });
@@ -56,11 +86,13 @@ export function AddBookmarkDialog() {
                 if (!isOpen) {
                     setTitle("");
                     setUrl("");
+                    setCategory("Uncategorized");
+                    setCustomCategory("");
                 }
             }
         }}>
             <DialogTrigger asChild>
-                <Button size="lg" className="mt-4 sm:mt-0" disabled={isPending}>
+                <Button size="lg" className="w-full sm:w-auto">
                     <Plus className="mr-2 h-5 w-5" />
                     Add Bookmark
                 </Button>
@@ -69,7 +101,7 @@ export function AddBookmarkDialog() {
                 <DialogHeader>
                     <DialogTitle>Add New Bookmark</DialogTitle>
                     <DialogDescription>
-                        Save a new link to your collection. Add a title and URL.
+                        Save a new link to your collection.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
@@ -99,6 +131,35 @@ export function AddBookmarkDialog() {
                                 disabled={isPending}
                             />
                         </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="category">Category</Label>
+                            <Select value={category} onValueChange={setCategory} disabled={isPending}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PREDEFINED_CATEGORIES.map((cat) => (
+                                        <SelectItem key={cat} value={cat}>
+                                            {cat}
+                                        </SelectItem>
+                                    ))}
+                                    <SelectItem value="Custom">+ Custom Category</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {category === "Custom" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="customCategory">Custom Category Name</Label>
+                                <Input
+                                    id="customCategory"
+                                    value={customCategory}
+                                    onChange={(e) => setCustomCategory(e.target.value)}
+                                    placeholder="Enter category name"
+                                    required
+                                    disabled={isPending}
+                                />
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button

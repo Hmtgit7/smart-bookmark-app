@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function addBookmarkAction(formData: FormData) {
     const title = formData.get("title") as string;
     const url = formData.get("url") as string;
+    const category = formData.get("category") as string || "Uncategorized";
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -19,6 +20,7 @@ export async function addBookmarkAction(formData: FormData) {
         .insert({
             title,
             url,
+            category,
             user_id: user.id,
         })
         .select()
@@ -35,6 +37,7 @@ export async function addBookmarkAction(formData: FormData) {
 export async function updateBookmarkAction(bookmarkId: string, formData: FormData) {
     const title = formData.get("title") as string;
     const url = formData.get("url") as string;
+    const category = formData.get("category") as string || "Uncategorized";
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -48,6 +51,7 @@ export async function updateBookmarkAction(bookmarkId: string, formData: FormDat
         .update({
             title,
             url,
+            category,
         })
         .eq("id", bookmarkId)
         .eq("user_id", user.id)

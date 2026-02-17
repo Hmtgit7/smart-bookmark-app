@@ -17,23 +17,53 @@ import { Label } from "@/components/ui/label";
 import { Pencil, Loader2 } from "lucide-react";
 import { updateBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+
+const PREDEFINED_CATEGORIES = [
+    "Uncategorized",
+    "Work",
+    "Personal",
+    "Learning",
+    "Shopping",
+    "Entertainment",
+    "News",
+    "Social Media",
+    "Development",
+    "Design",
+    "Other",
+];
 
 interface EditBookmarkDialogProps {
     bookmarkId: string;
     initialTitle: string;
     initialUrl: string;
+    initialCategory: string;
 }
 
 export function EditBookmarkDialog({
     bookmarkId,
     initialTitle,
-    initialUrl
+    initialUrl,
+    initialCategory
 }: EditBookmarkDialogProps) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [title, setTitle] = useState(initialTitle);
     const [url, setUrl] = useState(initialUrl);
+    const [category, setCategory] = useState(
+        PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom"
+    );
+    const [customCategory, setCustomCategory] = useState(
+        PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory
+    );
+
     const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -42,16 +72,20 @@ export function EditBookmarkDialog({
         if (isPending) return;
 
         const formData = new FormData(e.currentTarget);
+        const finalCategory = category === "Custom" ? customCategory : category;
+        formData.set("category", finalCategory);
 
         startTransition(async () => {
+            console.log("📝 Updating bookmark...");
             const result = await updateBookmarkAction(bookmarkId, formData);
 
             if (result.success && result.data) {
-                // Optimistically update UI
+                console.log("✅ Bookmark updated in database");
                 updateBookmark(bookmarkId, result.data);
                 toast.success(result.message);
                 setOpen(false);
             } else {
+                console.error("❌ Failed to update bookmark:", result.error);
                 toast.error(result.error || "Failed to update bookmark");
             }
         });
@@ -64,6 +98,8 @@ export function EditBookmarkDialog({
                 if (!isOpen) {
                     setTitle(initialTitle);
                     setUrl(initialUrl);
+                    setCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom");
+                    setCustomCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory);
                 }
             }
         }}>
@@ -115,6 +151,35 @@ export function EditBookmarkDialog({
                                 disabled={isPending}
                             />
                         </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-category">Category</Label>
+                            <Select value={category} onValueChange={setCategory} disabled={isPending}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {PREDEFINED_CATEGORIES.map((cat) => (
+                                        <SelectItem key={cat} value={cat}>
+                                            {cat}
+                                        </SelectItem>
+                                    ))}
+                                    <SelectItem value="Custom">+ Custom Category</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {category === "Custom" && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="edit-customCategory">Custom Category Name</Label>
+                                <Input
+                                    id="edit-customCategory"
+                                    value={customCategory}
+                                    onChange={(e) => setCustomCategory(e.target.value)}
+                                    placeholder="Enter category name"
+                                    required
+                                    disabled={isPending}
+                                />
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button

@@ -4,6 +4,7 @@
 import { useState, useTransition } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Trash2, Loader2, Bookmark } from "lucide-react";
 import { deleteBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
@@ -19,32 +20,32 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { EditBookmarkDialog } from "./EditBookmarkDialog";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
 
 interface BookmarkCardProps {
     id: string;
     title: string;
     url: string;
+    category: string;
     createdAt: string;
 }
 
-export function BookmarkCard({ id, title, url, createdAt }: BookmarkCardProps) {
+export function BookmarkCard({ id, title, url, category, createdAt }: BookmarkCardProps) {
     const [isDeleting, startDeleteTransition] = useTransition();
     const [alertOpen, setAlertOpen] = useState(false);
-    const deleteBookmark = useBookmarkStore((state) => state.deleteBookmark);
 
     function handleDelete() {
         if (isDeleting) return;
 
         startDeleteTransition(async () => {
+            console.log("🗑️ Deleting bookmark...");
             const result = await deleteBookmarkAction(id);
 
             if (result.success) {
-                // Optimistically update UI
-                deleteBookmark(id);
+                console.log("✅ Bookmark deleted from database");
                 toast.success(result.message);
                 setAlertOpen(false);
             } else {
+                console.error("❌ Failed to delete bookmark:", result.error);
                 toast.error(result.error || "Failed to delete bookmark");
             }
         });
@@ -79,41 +80,21 @@ export function BookmarkCard({ id, title, url, createdAt }: BookmarkCardProps) {
     return (
         <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2">
             <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1 min-w-0">
-                        {/* Favicon */}
-                        <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                            {getFavicon(url) ? (
-                                <img
-                                    src={getFavicon(url) || ""}
-                                    alt=""
-                                    className="w-8 h-8 rounded"
-                                    onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                    }}
-                                />
-                            ) : (
-                                <Bookmark className="w-6 h-6 text-primary" />
-                            )}
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg mb-1 truncate">{title}</h3>
-                            <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-primary hover:underline flex items-center space-x-1 mb-2"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <span className="truncate">{getDomain(url)}</span>
-                                <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                            </a>
-                            <p className="text-xs text-muted-foreground">
-                                Added on {formatDate(createdAt)}
-                            </p>
-                        </div>
+                <div className="flex items-start justify-between mb-3">
+                    {/* Favicon */}
+                    <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        {getFavicon(url) ? (
+                            <img
+                                src={getFavicon(url) || ""}
+                                alt=""
+                                className="w-8 h-8 rounded"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                }}
+                            />
+                        ) : (
+                            <Bookmark className="w-6 h-6 text-primary" />
+                        )}
                     </div>
 
                     {/* Actions */}
@@ -138,6 +119,7 @@ export function BookmarkCard({ id, title, url, createdAt }: BookmarkCardProps) {
                             bookmarkId={id}
                             initialTitle={title}
                             initialUrl={url}
+                            initialCategory={category}
                         />
 
                         <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
@@ -185,6 +167,31 @@ export function BookmarkCard({ id, title, url, createdAt }: BookmarkCardProps) {
                                 </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-2">
+                    <h3 className="font-semibold text-lg line-clamp-2">{title}</h3>
+
+                    <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center space-x-1"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <span className="truncate">{getDomain(url)}</span>
+                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                    </a>
+
+                    <div className="flex items-center justify-between pt-2">
+                        <Badge variant="secondary" className="text-xs">
+                            {category}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground">
+                            {formatDate(createdAt)}
+                        </p>
                     </div>
                 </div>
             </CardContent>
