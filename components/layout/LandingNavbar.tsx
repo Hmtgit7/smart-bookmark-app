@@ -79,7 +79,7 @@ export function LandingNavbar() {
                                 </SheetHeader>
                                 <div className="flex flex-col space-y-4 mt-8">
                                     <Button variant="outline" asChild className="w-full" onClick={() => setOpen(false)}>
-                                        <Link href="/auth/login">Log in</Link>
+                                        <Link href="/login">Log in</Link>
                                     </Button>
                                     <Button asChild className="w-full" onClick={() => setOpen(false)}>
                                         <Link href="/signup">Get Started</Link>
