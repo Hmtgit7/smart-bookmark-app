@@ -25,13 +25,23 @@ interface BookmarkCardProps {
     id: string;
     title: string;
     url: string;
+    description: string | null;
     category: string;
     archived: boolean;
     archivedAt: string | null;
     createdAt: string;
 }
 
-export function BookmarkCard({ id, title, url, category, archived, archivedAt, createdAt }: BookmarkCardProps) {
+export function BookmarkCard({
+    id,
+    title,
+    url,
+    description,
+    category,
+    archived,
+    archivedAt,
+    createdAt
+}: BookmarkCardProps) {
     const [isDeleting, startDeleteTransition] = useTransition();
     const [isArchiving, startArchiveTransition] = useTransition();
     const [alertOpen, setAlertOpen] = useState(false);
@@ -100,7 +110,6 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
         <Card className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 ${archived ? 'opacity-75' : ''}`}>
             <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
-                    {/* Favicon */}
                     <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                         {getFavicon(url) ? (
                             <img
@@ -116,7 +125,6 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
                         )}
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center space-x-2 ml-4">
                         {!archived && (
                             <Button
@@ -141,6 +149,7 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
                                 bookmarkId={id}
                                 initialTitle={title}
                                 initialUrl={url}
+                                initialDescription={description}
                                 initialCategory={category}
                             />
                         )}
@@ -180,7 +189,7 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Bookmark?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to delete "{title}"? This action cannot be
+                                        Are you sure you want to delete `${title}`? This action cannot be
                                         undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
@@ -209,9 +218,14 @@ export function BookmarkCard({ id, title, url, category, archived, archivedAt, c
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className="space-y-2">
                     <h3 className="font-semibold text-lg line-clamp-2">{title}</h3>
+
+                    {description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                            {description}
+                        </p>
+                    )}
 
                     <a
                         href={url}

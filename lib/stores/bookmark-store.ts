@@ -4,6 +4,7 @@ export interface Bookmark {
     id: string;
     title: string;
     url: string;
+    description: string | null;
     category: string;
     archived: boolean;
     archived_at: string | null;
@@ -20,7 +21,7 @@ interface BookmarkStore {
     currentPage: number;
     itemsPerPage: number;
     showArchived: boolean;
-    viewMode: 'grid' | 'list'; // New field
+    viewMode: 'grid' | 'list';
 
     setBookmarks: (bookmarks: Bookmark[]) => void;
     addBookmark: (bookmark: Bookmark) => void;
@@ -32,11 +33,10 @@ interface BookmarkStore {
     setSortBy: (sortBy: 'newest' | 'oldest' | 'alphabetical') => void;
     setCurrentPage: (page: number) => void;
     setShowArchived: (show: boolean) => void;
-    setViewMode: (mode: 'grid' | 'list') => void; // New action
+    setViewMode: (mode: 'grid' | 'list') => void;
 
-    // Computed values
     getFilteredBookmarks: () => Bookmark[];
-    getAllFilteredBookmarks: () => Bookmark[]; // New - for list view
+    getAllFilteredBookmarks: () => Bookmark[];
     getCategories: () => string[];
     getTotalPages: () => number;
     checkDuplicateTitle: (title: string, excludeId?: string) => boolean;
@@ -51,7 +51,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     currentPage: 1,
     itemsPerPage: 9,
     showArchived: false,
-    viewMode: 'grid', // Default to grid view
+    viewMode: 'grid',
 
     setBookmarks: (bookmarks) => set({ bookmarks, isLoading: false }),
 
@@ -83,34 +83,30 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     setSortBy: (sortBy) => set({ sortBy, currentPage: 1 }),
     setCurrentPage: (page) => set({ currentPage: page }),
     setShowArchived: (show) => set({ showArchived: show, currentPage: 1 }),
-    setViewMode: (mode) => set({ viewMode: mode, currentPage: 1 }), // New
+    setViewMode: (mode) => set({ viewMode: mode, currentPage: 1 }),
 
-    // Get filtered and paginated bookmarks (for grid view)
     getFilteredBookmarks: () => {
         const state = get();
         let filtered = [...state.bookmarks];
 
-        // Filter by archived status
         filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
 
-        // Filter by search query
         if (state.searchQuery) {
             const query = state.searchQuery.toLowerCase();
             filtered = filtered.filter(
                 (bookmark) =>
                     bookmark.title.toLowerCase().includes(query) ||
-                    bookmark.url.toLowerCase().includes(query)
+                    bookmark.url.toLowerCase().includes(query) ||
+                    bookmark.description?.toLowerCase().includes(query)
             );
         }
 
-        // Filter by category
         if (state.selectedCategory !== 'All') {
             filtered = filtered.filter(
                 (bookmark) => bookmark.category === state.selectedCategory
             );
         }
 
-        // Sort
         filtered.sort((a, b) => {
             switch (state.sortBy) {
                 case 'newest':
@@ -124,7 +120,6 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             }
         });
 
-        // Paginate (only for grid view)
         if (state.viewMode === 'grid') {
             const start = (state.currentPage - 1) * state.itemsPerPage;
             const end = start + state.itemsPerPage;
@@ -134,32 +129,28 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         return filtered;
     },
 
-    // Get all filtered bookmarks without pagination (for list view)
     getAllFilteredBookmarks: () => {
         const state = get();
         let filtered = [...state.bookmarks];
 
-        // Filter by archived status
         filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
 
-        // Filter by search query
         if (state.searchQuery) {
             const query = state.searchQuery.toLowerCase();
             filtered = filtered.filter(
                 (bookmark) =>
                     bookmark.title.toLowerCase().includes(query) ||
-                    bookmark.url.toLowerCase().includes(query)
+                    bookmark.url.toLowerCase().includes(query) ||
+                    bookmark.description?.toLowerCase().includes(query)
             );
         }
 
-        // Filter by category
         if (state.selectedCategory !== 'All') {
             filtered = filtered.filter(
                 (bookmark) => bookmark.category === state.selectedCategory
             );
         }
 
-        // Sort
         filtered.sort((a, b) => {
             switch (state.sortBy) {
                 case 'newest':
@@ -190,7 +181,6 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         const state = get();
         let filtered = [...state.bookmarks];
 
-        // Filter by archived status
         filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
 
         if (state.searchQuery) {
@@ -198,7 +188,8 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             filtered = filtered.filter(
                 (bookmark) =>
                     bookmark.title.toLowerCase().includes(query) ||
-                    bookmark.url.toLowerCase().includes(query)
+                    bookmark.url.toLowerCase().includes(query) ||
+                    bookmark.description?.toLowerCase().includes(query)
             );
         }
 

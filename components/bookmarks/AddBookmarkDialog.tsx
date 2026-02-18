@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { addBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ export function AddBookmarkDialog() {
     const [isPending, startTransition] = useTransition();
     const [title, setTitle] = useState("");
     const [url, setUrl] = useState("");
+    const [description, setDescription] = useState("");
     const [category, setCategory] = useState("Uncategorized");
     const [customCategory, setCustomCategory] = useState("");
     const [isDuplicate, setIsDuplicate] = useState(false);
@@ -78,6 +80,7 @@ export function AddBookmarkDialog() {
                 setOpen(false);
                 setTitle("");
                 setUrl("");
+                setDescription("");
                 setCategory("Uncategorized");
                 setCustomCategory("");
             } else {
@@ -93,6 +96,7 @@ export function AddBookmarkDialog() {
                 if (!isOpen) {
                     setTitle("");
                     setUrl("");
+                    setDescription("");
                     setCategory("Uncategorized");
                     setCustomCategory("");
                     setIsDuplicate(false);
@@ -105,7 +109,7 @@ export function AddBookmarkDialog() {
                     Add Bookmark
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Add New Bookmark</DialogTitle>
                     <DialogDescription>
@@ -115,7 +119,7 @@ export function AddBookmarkDialog() {
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="title">Title</Label>
+                            <Label htmlFor="title">Title *</Label>
                             <Input
                                 id="title"
                                 name="title"
@@ -135,8 +139,9 @@ export function AddBookmarkDialog() {
                                 </Alert>
                             )}
                         </div>
+
                         <div className="grid gap-2">
-                            <Label htmlFor="url">URL</Label>
+                            <Label htmlFor="url">URL *</Label>
                             <Input
                                 id="url"
                                 name="url"
@@ -148,6 +153,24 @@ export function AddBookmarkDialog() {
                                 disabled={isPending}
                             />
                         </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="description">Description (Optional)</Label>
+                            <Textarea
+                                id="description"
+                                name="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Add a brief description of this bookmark..."
+                                disabled={isPending}
+                                rows={3}
+                                className="resize-none"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                Help remember what this bookmark is about
+                            </p>
+                        </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="category">Category</Label>
                             <Select value={category} onValueChange={setCategory} disabled={isPending}>
@@ -164,6 +187,7 @@ export function AddBookmarkDialog() {
                                 </SelectContent>
                             </Select>
                         </div>
+
                         {category === "Custom" && (
                             <div className="grid gap-2">
                                 <Label htmlFor="customCategory">Custom Category Name</Label>

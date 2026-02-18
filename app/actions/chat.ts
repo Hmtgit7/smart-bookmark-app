@@ -35,9 +35,21 @@ export async function sendChatMessage(message: string) {
         }
 
         // Create context from bookmarks
-        const bookmarksContext = bookmarks.map((b, i) =>
-            `${i + 1}. "${b.title}" - ${b.url} (Category: ${b.category}, Added: ${new Date(b.created_at).toLocaleDateString()})`
-        ).join("\n");
+        const bookmarksContext = bookmarks.map((b, i) => {
+            const parts = [
+                `${i + 1}. "${b.title}"`,
+                `URL: ${b.url}`,
+                `Category: ${b.category}`,
+            ];
+
+            if (b.description) {
+                parts.push(`Description: ${b.description}`);
+            }
+
+            parts.push(`Added: ${new Date(b.created_at).toLocaleDateString()}`);
+
+            return parts.join(' | ');
+        }).join("\n");
 
         // Create system prompt
         const systemPrompt = `You are a helpful AI assistant that helps users find and manage their bookmarks.
@@ -84,3 +96,4 @@ Respond in a friendly, conversational tone.`;
         return { error: error?.message || "Failed to process your request." };
     }
 }
+

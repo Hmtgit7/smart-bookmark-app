@@ -1,9 +1,10 @@
+// components/bookmarks/BookmarkListItem.tsx
 "use client";
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Trash2, Loader2, Bookmark, Archive, ArchiveRestore, Pencil } from "lucide-react";
+import { ExternalLink, Trash2, Loader2, Bookmark, Archive, ArchiveRestore } from "lucide-react";
 import { deleteBookmarkAction, archiveBookmarkAction, unarchiveBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
 import {
@@ -24,6 +25,7 @@ interface BookmarkListItemProps {
     id: string;
     title: string;
     url: string;
+    description: string | null;
     category: string;
     archived: boolean;
     archivedAt: string | null;
@@ -34,6 +36,7 @@ export function BookmarkListItem({
     id,
     title,
     url,
+    description,
     category,
     archived,
     archivedAt,
@@ -103,8 +106,7 @@ export function BookmarkListItem({
     };
 
     return (
-        <div className={`group flex items-center gap-4 p-4 border rounded-lg hover:shadow-md transition-all bg-card ${archived ? 'opacity-75' : ''}`}>
-            {/* Favicon */}
+        <div className={`group flex items-start gap-4 p-4 border rounded-lg hover:shadow-md transition-all bg-card ${archived ? 'opacity-75' : ''}`}>
             <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 {getFavicon(url) ? (
                     <img
@@ -120,7 +122,6 @@ export function BookmarkListItem({
                 )}
             </div>
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold text-base truncate">{title}</h3>
@@ -133,6 +134,13 @@ export function BookmarkListItem({
                         </Badge>
                     )}
                 </div>
+
+                {description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-1">
+                        {description}
+                    </p>
+                )}
+
                 <a
                     href={url}
                     target="_blank"
@@ -143,6 +151,7 @@ export function BookmarkListItem({
                     <span className="truncate">{getDomain(url)}</span>
                     <ExternalLink className="w-3 h-3 flex-shrink-0" />
                 </a>
+
                 <p className="text-xs text-muted-foreground">
                     {archived && archivedAt ? (
                         <>Archived {formatDate(archivedAt)}</>
@@ -152,7 +161,6 @@ export function BookmarkListItem({
                 </p>
             </div>
 
-            {/* Actions */}
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!archived && (
                     <>
@@ -170,6 +178,7 @@ export function BookmarkListItem({
                             bookmarkId={id}
                             initialTitle={title}
                             initialUrl={url}
+                            initialDescription={description}
                             initialCategory={category}
                         />
                     </>
@@ -209,7 +218,7 @@ export function BookmarkListItem({
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete Bookmark?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Are you sure you want to delete "{title}"? This action cannot be undone.
+                                Are you sure you want to delete `${title}`? This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

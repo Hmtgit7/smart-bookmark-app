@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Loader2, AlertCircle } from "lucide-react";
 import { updateBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ interface EditBookmarkDialogProps {
     bookmarkId: string;
     initialTitle: string;
     initialUrl: string;
+    initialDescription: string | null;
     initialCategory: string;
 }
 
@@ -51,12 +53,14 @@ export function EditBookmarkDialog({
     bookmarkId,
     initialTitle,
     initialUrl,
+    initialDescription,
     initialCategory
 }: EditBookmarkDialogProps) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [title, setTitle] = useState(initialTitle);
     const [url, setUrl] = useState(initialUrl);
+    const [description, setDescription] = useState(initialDescription || "");
     const [category, setCategory] = useState(
         PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom"
     );
@@ -105,6 +109,7 @@ export function EditBookmarkDialog({
                 if (!isOpen) {
                     setTitle(initialTitle);
                     setUrl(initialUrl);
+                    setDescription(initialDescription || "");
                     setCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom");
                     setCustomCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory);
                     setIsDuplicate(false);
@@ -125,7 +130,7 @@ export function EditBookmarkDialog({
                     )}
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Bookmark</DialogTitle>
                     <DialogDescription>
@@ -135,7 +140,7 @@ export function EditBookmarkDialog({
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-title">Title</Label>
+                            <Label htmlFor="edit-title">Title *</Label>
                             <Input
                                 id="edit-title"
                                 name="title"
@@ -155,8 +160,9 @@ export function EditBookmarkDialog({
                                 </Alert>
                             )}
                         </div>
+
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-url">URL</Label>
+                            <Label htmlFor="edit-url">URL *</Label>
                             <Input
                                 id="edit-url"
                                 name="url"
@@ -168,6 +174,21 @@ export function EditBookmarkDialog({
                                 disabled={isPending}
                             />
                         </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="edit-description">Description (Optional)</Label>
+                            <Textarea
+                                id="edit-description"
+                                name="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Add a brief description of this bookmark..."
+                                disabled={isPending}
+                                rows={3}
+                                className="resize-none"
+                            />
+                        </div>
+
                         <div className="grid gap-2">
                             <Label htmlFor="edit-category">Category</Label>
                             <Select value={category} onValueChange={setCategory} disabled={isPending}>
@@ -184,6 +205,7 @@ export function EditBookmarkDialog({
                                 </SelectContent>
                             </Select>
                         </div>
+
                         {category === "Custom" && (
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-customCategory">Custom Category Name</Label>
