@@ -1,29 +1,11 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Zap, Shield, Globe, Sparkles, ArrowRight, Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { Bookmark, Zap, Shield, Globe, Sparkles, ArrowRight } from "lucide-react";
 import { LandingNavbar } from "@/components/layout/LandingNavbar";
-
-async function AuthCheck() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect("/dashboard");
-  }
-
-  return null;
-}
 
 export default function LandingPage() {
   return (
     <>
-      <Suspense fallback={null}>
-        <AuthCheck />
-      </Suspense>
-
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         {/* Responsive Navbar with Theme Toggle */}
         <LandingNavbar />
@@ -52,7 +34,7 @@ export default function LandingPage() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4">
                 <Button size="lg" asChild className="w-full sm:w-auto">
-                  <Link href="/sign-up">
+                  <Link href="/login">
                     Start for Free
                     <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                   </Link>
@@ -115,7 +97,7 @@ export default function LandingPage() {
               Join thousands of users who trust Smart Bookmarks
             </p>
             <Button size="lg" asChild className="w-full sm:w-auto">
-              <Link href="/sign-up">
+              <Link href="/login">
                 Get Started Now
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Link>

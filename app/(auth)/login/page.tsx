@@ -137,6 +137,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Bookmark, ArrowLeft, Loader2 } from "lucide-react";
 import { signInWithGoogleAction } from "@/app/actions/auth";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+
+async function AuthCheck() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  return null;
+}
 
 function LoginForm() {
   return (
@@ -198,8 +211,13 @@ function LoginLoading() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<LoginLoading />}>
-      <LoginForm />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <AuthCheck />
+      </Suspense>
+      <Suspense fallback={<LoginLoading />}>
+        <LoginForm />
+      </Suspense>
+    </>
   );
 }

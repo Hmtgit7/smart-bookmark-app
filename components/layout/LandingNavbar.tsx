@@ -46,7 +46,7 @@ export function LandingNavbar() {
                             <Link href="/login">Log in</Link>
                         </Button>
                         <Button asChild>
-                            <Link href="/sign-up">Get Started</Link>
+                            <Link href="/login">Get Started</Link>
                         </Button>
                     </div>
 
@@ -81,7 +81,7 @@ export function LandingNavbar() {
                                         <Link href="/login">Log in</Link>
                                     </Button>
                                     <Button asChild className="w-full" onClick={() => setOpen(false)}>
-                                        <Link href="/sign-up">Get Started</Link>
+                                        <Link href="/login">Get Started</Link>
                                     </Button>
                                 </div>
                             </SheetContent>
