@@ -276,7 +276,6 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Loader2, Sparkles, AlertCircle, X } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { sendChatMessage } from "@/app/actions/chat";
 import { Card } from "@/components/ui/card";
@@ -299,11 +298,10 @@ export function ChatBot() {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     async function handleSend() {
@@ -386,68 +384,71 @@ export function ChatBot() {
                     </div>
 
                     {/* Messages */}
-                    <ScrollArea className="flex-1 px-4 sm:px-6" ref={scrollRef}>
-                        <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
-                            {messages.map((message, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex gap-2 sm:gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 ${message.role === "user" ? "justify-end" : "justify-start"
-                                        }`}
-                                >
-                                    {(message.role === "assistant" || message.role === "error") && (
-                                        <Avatar className={`h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ${message.role === "error" ? "bg-destructive/10" : "bg-primary/10"
-                                            }`}>
-                                            <AvatarFallback>
-                                                {message.role === "error" ? (
-                                                    <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
-                                                ) : (
-                                                    <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                                                )}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                    )}
+                    <div className="flex-1 overflow-hidden">
+                        <div className="h-full overflow-y-auto px-4 sm:px-6" ref={scrollRef}>
+                            <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
+                                {messages.map((message, index) => (
                                     <div
-                                        className={`rounded-2xl px-3 py-2 max-w-[85%] sm:max-w-[80%] ${message.role === "user"
-                                                ? "bg-primary text-primary-foreground rounded-br-sm"
-                                                : message.role === "error"
-                                                    ? "bg-destructive/10 text-destructive border border-destructive/20 rounded-bl-sm"
-                                                    : "bg-muted rounded-bl-sm"
+                                        key={index}
+                                        className={`flex gap-2 sm:gap-3 animate-in slide-in-from-bottom-2 fade-in duration-300 ${message.role === "user" ? "justify-end" : "justify-start"
                                             }`}
                                     >
-                                        <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">
-                                            {message.content}
-                                        </p>
-                                        <span className="text-[10px] sm:text-xs opacity-70 mt-1 block">
-                                            {message.timestamp.toLocaleTimeString([], {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
-                                        </span>
+                                        {(message.role === "assistant" || message.role === "error") && (
+                                            <Avatar className={`h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ${message.role === "error" ? "bg-destructive/10" : "bg-primary/10"
+                                                }`}>
+                                                <AvatarFallback>
+                                                    {message.role === "error" ? (
+                                                        <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive" />
+                                                    ) : (
+                                                        <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                                                    )}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        )}
+                                        <div
+                                            className={`rounded-2xl px-3 py-2 max-w-[85%] sm:max-w-[80%] ${message.role === "user"
+                                                    ? "bg-primary text-primary-foreground rounded-br-sm"
+                                                    : message.role === "error"
+                                                        ? "bg-destructive/10 text-destructive border border-destructive/20 rounded-bl-sm"
+                                                        : "bg-muted rounded-bl-sm"
+                                                }`}
+                                        >
+                                            <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">
+                                                {message.content}
+                                            </p>
+                                            <span className="text-[10px] sm:text-xs opacity-70 mt-1 block">
+                                                {message.timestamp.toLocaleTimeString([], {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </span>
+                                        </div>
+                                        {message.role === "user" && (
+                                            <Avatar className="h-7 w-7 sm:h-8 sm:w-8 bg-primary flex-shrink-0">
+                                                <AvatarFallback className="text-primary-foreground text-[10px] sm:text-xs font-semibold">
+                                                    You
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        )}
                                     </div>
-                                    {message.role === "user" && (
-                                        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 bg-primary flex-shrink-0">
-                                            <AvatarFallback className="text-primary-foreground text-[10px] sm:text-xs font-semibold">
-                                                You
+                                ))}
+                                {isLoading && (
+                                    <div className="flex gap-2 sm:gap-3 justify-start animate-in slide-in-from-bottom-2 fade-in">
+                                        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 bg-primary/10">
+                                            <AvatarFallback>
+                                                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-pulse" />
                                             </AvatarFallback>
                                         </Avatar>
-                                    )}
-                                </div>
-                            ))}
-                            {isLoading && (
-                                <div className="flex gap-2 sm:gap-3 justify-start animate-in slide-in-from-bottom-2 fade-in">
-                                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 bg-primary/10">
-                                        <AvatarFallback>
-                                            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary animate-pulse" />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="rounded-2xl rounded-bl-sm px-3 py-2 bg-muted flex items-center gap-2">
-                                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary" />
-                                        <span className="text-xs sm:text-sm text-muted-foreground">Thinking...</span>
+                                        <div className="rounded-2xl rounded-bl-sm px-3 py-2 bg-muted flex items-center gap-2">
+                                            <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-primary" />
+                                            <span className="text-xs sm:text-sm text-muted-foreground">Thinking...</span>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                                <div ref={messagesEndRef} />
+                            </div>
                         </div>
-                    </ScrollArea>
+                    </div>
 
                     {/* Input */}
                     <div className="border-t px-4 sm:px-6 py-3 sm:py-4 bg-background">
