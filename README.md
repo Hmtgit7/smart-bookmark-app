@@ -15,6 +15,7 @@ A modern, AI-powered bookmark manager built with **Next.js 16** and **Supabase**
 - 🔍 **Smart Search** — Quickly find bookmarks by title or URL
 - 🏷️ **Categories** — Organize bookmarks with predefined or custom categories
 - 📦 **Archive System** — Archive old bookmarks without deleting them
+- 📝 **Description Field** — Add a short description to each bookmark
 - 🚫 **Duplicate Prevention** — Real-time warning when a duplicate title is detected
 - 📄 **Pagination** — Clean pagination for large bookmark collections
 - 🎨 **Dark / Light Mode** — Toggle between themes
