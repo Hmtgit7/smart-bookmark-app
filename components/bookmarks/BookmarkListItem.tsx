@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Trash2, Loader2, Bookmark, Archive, ArchiveRestore } from "lucide-react";
 import { deleteBookmarkAction, archiveBookmarkAction, unarchiveBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
+import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -54,6 +55,8 @@ export function BookmarkListItem({
         startDeleteTransition(async () => {
             const result = await deleteBookmarkAction(id);
             if (result.success) {
+                // Broadcast to other tabs
+                bookmarkSyncChannel.notifyDelete(id);
                 toast.success(result.message);
                 setAlertOpen(false);
             } else {
@@ -72,6 +75,8 @@ export function BookmarkListItem({
 
             if (result.success && result.data) {
                 updateBookmark(id, result.data);
+                // Broadcast to other tabs
+                bookmarkSyncChannel.notifyUpdate(result.data);
                 toast.success(result.message);
             } else {
                 toast.error(result.error || "Failed to update bookmark");

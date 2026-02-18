@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { BookmarkCard } from "./BookmarkCard";
 import { BookmarkListView } from "./BookmarkListView";
 import { BookmarkFilters } from "./BookmarkFilters";
@@ -8,6 +8,7 @@ import { BookmarkPagination } from "./BookmarkPagination";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, BookmarkX } from "lucide-react";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
 
 interface BookmarkListProps {
   userId: string;
@@ -28,25 +29,28 @@ export function BookmarkList({ userId }: BookmarkListProps) {
 
   const filteredBookmarks = getFilteredBookmarks();
 
+  // Function to fetch bookmarks - extracted for reuse
+  const fetchBookmarks = useCallback(async () => {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("bookmarks")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setBookmarks(data);
+    } else if (error) {
+      setBookmarks([]);
+    }
+  }, [userId, setBookmarks]);
+
   useEffect(() => {
     const supabase = createClient();
 
-    async function fetchBookmarks() {
-      const { data, error } = await supabase
-        .from("bookmarks")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setBookmarks(data);
-      } else if (error) {
-        setBookmarks([]);
-      }
-    }
-
     fetchBookmarks();
 
+    // Subscribe to Supabase Realtime changes
     const channel = supabase
       .channel('bookmarks-changes')
       .on(
@@ -73,10 +77,35 @@ export function BookmarkList({ userId }: BookmarkListProps) {
       )
       .subscribe();
 
+    // Subscribe to cross-tab sync messages via BroadcastChannel
+    const unsubscribeSync = bookmarkSyncChannel.subscribe((message) => {
+      switch (message.type) {
+        case 'INSERT':
+          if (message.bookmark) {
+            addBookmark(message.bookmark);
+          }
+          break;
+        case 'UPDATE':
+          if (message.bookmark) {
+            updateBookmark(message.bookmark.id, message.bookmark);
+          }
+          break;
+        case 'DELETE':
+          if (message.bookmarkId) {
+            deleteBookmark(message.bookmarkId);
+          }
+          break;
+        case 'REFRESH':
+          fetchBookmarks();
+          break;
+      }
+    });
+
     return () => {
       supabase.removeChannel(channel);
+      unsubscribeSync();
     };
-  }, [userId, setBookmarks, addBookmark, updateBookmark, deleteBookmark]);
+  }, [userId, setBookmarks, addBookmark, updateBookmark, deleteBookmark, fetchBookmarks]);
 
   if (isLoading) {
     return (

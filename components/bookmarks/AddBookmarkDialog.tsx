@@ -18,6 +18,7 @@ import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { addBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
 import {
     Select,
     SelectContent,
@@ -76,6 +77,8 @@ export function AddBookmarkDialog() {
 
             if (result.success && result.data) {
                 addBookmark(result.data);
+                // Broadcast to other tabs
+                bookmarkSyncChannel.notifyAdd(result.data);
                 toast.success(result.message);
                 setOpen(false);
                 setTitle("");

@@ -18,6 +18,7 @@ import { Pencil, Loader2, AlertCircle } from "lucide-react";
 import { updateBookmarkAction } from "@/app/actions/bookmarks";
 import { toast } from "sonner";
 import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
 import {
     Select,
     SelectContent,
@@ -94,6 +95,8 @@ export function EditBookmarkDialog({
 
             if (result.success && result.data) {
                 updateBookmark(bookmarkId, result.data);
+                // Broadcast to other tabs
+                bookmarkSyncChannel.notifyUpdate(result.data);
                 toast.success(result.message);
                 setOpen(false);
             } else {
