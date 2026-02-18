@@ -30,7 +30,15 @@ export function LandingNavbar() {
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="hidden md:flex items-center space-x-1">
+                        {/* Nav Links */}
+                        <Button variant="ghost" asChild>
+                            <Link href="#home">Home</Link>
+                        </Button>
+                        <Button variant="ghost" asChild>
+                            <Link href="#features">Features</Link>
+                        </Button>
+                        
                         {/* Theme Toggle */}
                         <Button
                             variant="ghost"
@@ -77,12 +85,21 @@ export function LandingNavbar() {
                                     </SheetTitle>
                                 </SheetHeader>
                                 <div className="flex flex-col space-y-4 mt-8 p-2">
-                                    <Button variant="outline" asChild className="w-full" onClick={() => setOpen(false)}>
-                                        <Link href="/login">Log in</Link>
+                                    <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
+                                        <Link href="#home">Home</Link>
                                     </Button>
-                                    <Button asChild className="w-full" onClick={() => setOpen(false)}>
-                                        <Link href="/login">Get Started</Link>
+                                    <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
+                                        <Link href="#features">Features</Link>
                                     </Button>
+                                    
+                                    <div className="pt-4 border-t">
+                                        <Button variant="outline" asChild className="w-full" onClick={() => setOpen(false)}>
+                                            <Link href="/login">Log in</Link>
+                                        </Button>
+                                        <Button asChild className="w-full mt-3" onClick={() => setOpen(false)}>
+                                            <Link href="/login">Get Started</Link>
+                                        </Button>
+                                    </div>
                                 </div>
                             </SheetContent>
                         </Sheet>
