@@ -12,6 +12,7 @@ import {
     ArchiveRestore,
     Pin,
     PinOff,
+    Tag,
 } from 'lucide-react';
 import {
     deleteBookmarkAction,
@@ -198,8 +199,8 @@ export function BookmarkListItem({
                 {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-1">
                         {tags.map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs px-2 py-0">
-                                #{tag}
+                            <Badge key={tag} variant="outline" className="text-xs px-2 py-0 gap-1">
+                                <Tag className="h-3 w-3" />{tag}
                             </Badge>
                         ))}
                     </div>
