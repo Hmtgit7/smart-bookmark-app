@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useTransition, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useTransition, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -10,36 +10,37 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Pencil, Loader2, AlertCircle } from "lucide-react";
-import { updateBookmarkAction } from "@/app/actions/bookmarks";
-import { toast } from "sonner";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
-import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Pencil, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { updateBookmarkAction } from '@/app/actions/bookmarks';
+import { getAISuggestionsAction } from '@/app/actions/ai-tag';
+import { toast } from 'sonner';
+import { useBookmarkStore } from '@/lib/stores/bookmark-store';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+} from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { TagInput } from './TagInput';
 
 const PREDEFINED_CATEGORIES = [
-    "Uncategorized",
-    "Work",
-    "Personal",
-    "Learning",
-    "Shopping",
-    "Entertainment",
-    "News",
-    "Social Media",
-    "Development",
-    "Design",
-    "Other",
+    'Uncategorized',
+    'Work',
+    'Personal',
+    'Learning',
+    'Shopping',
+    'Entertainment',
+    'News',
+    'Social Media',
+    'Development',
+    'Design',
+    'Other',
 ];
 
 interface EditBookmarkDialogProps {
@@ -47,6 +48,7 @@ interface EditBookmarkDialogProps {
     initialTitle: string;
     initialUrl: string;
     initialDescription: string | null;
+    initialTags: string[];
     initialCategory: string;
 }
 
@@ -55,70 +57,93 @@ export function EditBookmarkDialog({
     initialTitle,
     initialUrl,
     initialDescription,
-    initialCategory
+    initialTags,
+    initialCategory,
 }: EditBookmarkDialogProps) {
     const [open, setOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
+    const [isAiLoading, startAiTransition] = useTransition();
     const [title, setTitle] = useState(initialTitle);
     const [url, setUrl] = useState(initialUrl);
-    const [description, setDescription] = useState(initialDescription || "");
+    const [description, setDescription] = useState(initialDescription || '');
+    const [tags, setTags] = useState<string[]>(initialTags || []);
     const [category, setCategory] = useState(
-        PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom"
+        PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : 'Custom'
     );
     const [customCategory, setCustomCategory] = useState(
-        PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory
+        PREDEFINED_CATEGORIES.includes(initialCategory) ? '' : initialCategory
     );
     const [isDuplicate, setIsDuplicate] = useState(false);
 
-    const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
-    const checkDuplicateTitle = useBookmarkStore((state) => state.checkDuplicateTitle);
+    const updateBookmark = useBookmarkStore((s) => s.updateBookmark);
+    const checkDuplicateTitle = useBookmarkStore((s) => s.checkDuplicateTitle);
 
     useEffect(() => {
-        if (title.trim() && title !== initialTitle) {
-            setIsDuplicate(checkDuplicateTitle(title, bookmarkId));
-        } else {
-            setIsDuplicate(false);
-        }
+        setIsDuplicate(
+            title.trim() && title !== initialTitle ? checkDuplicateTitle(title, bookmarkId) : false
+        );
     }, [title, initialTitle, bookmarkId, checkDuplicateTitle]);
+
+    function handleAISuggest() {
+        startAiTransition(async () => {
+            const result = await getAISuggestionsAction(url, title);
+
+            if (result.success) {
+                if (result.tags?.length) setTags(result.tags);
+                if (result.category) setCategory(result.category);
+                if (result.description && !description) setDescription(result.description);
+                toast.success('AI suggestions applied!');
+            } else {
+                toast.error(result.error || 'AI suggestion failed');
+            }
+        });
+    }
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-
         if (isPending || isDuplicate) return;
 
         const formData = new FormData(e.currentTarget);
-        const finalCategory = category === "Custom" ? customCategory : category;
-        formData.set("category", finalCategory);
+        formData.set('category', category === 'Custom' ? customCategory : category);
+        formData.set('tags', tags.join(','));
 
         startTransition(async () => {
             const result = await updateBookmarkAction(bookmarkId, formData);
 
             if (result.success && result.data) {
                 updateBookmark(bookmarkId, result.data);
-                // Broadcast to other tabs
-                bookmarkSyncChannel.notifyUpdate(result.data);
                 toast.success(result.message);
                 setOpen(false);
             } else {
-                toast.error(result.error || "Failed to update bookmark");
+                toast.error(result.error || 'Failed to update bookmark');
             }
         });
     }
 
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => {
-            if (!isPending) {
-                setOpen(isOpen);
-                if (!isOpen) {
-                    setTitle(initialTitle);
-                    setUrl(initialUrl);
-                    setDescription(initialDescription || "");
-                    setCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? initialCategory : "Custom");
-                    setCustomCategory(PREDEFINED_CATEGORIES.includes(initialCategory) ? "" : initialCategory);
-                    setIsDuplicate(false);
+        <Dialog
+            open={open}
+            onOpenChange={(isOpen) => {
+                if (!isPending) {
+                    setOpen(isOpen);
+                    if (!isOpen) {
+                        setTitle(initialTitle);
+                        setUrl(initialUrl);
+                        setDescription(initialDescription || '');
+                        setTags(initialTags || []);
+                        setCategory(
+                            PREDEFINED_CATEGORIES.includes(initialCategory)
+                                ? initialCategory
+                                : 'Custom'
+                        );
+                        setCustomCategory(
+                            PREDEFINED_CATEGORIES.includes(initialCategory) ? '' : initialCategory
+                        );
+                        setIsDuplicate(false);
+                    }
                 }
-            }
-        }}>
+            }}
+        >
             <DialogTrigger asChild>
                 <Button
                     variant="ghost"
@@ -136,9 +161,7 @@ export function EditBookmarkDialog({
             <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Bookmark</DialogTitle>
-                    <DialogDescription>
-                        Update your bookmark details below.
-                    </DialogDescription>
+                    <DialogDescription>Update your bookmark details below.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
@@ -152,7 +175,7 @@ export function EditBookmarkDialog({
                                 placeholder="My Favorite Website"
                                 required
                                 disabled={isPending}
-                                className={isDuplicate ? "border-destructive" : ""}
+                                className={isDuplicate ? 'border-destructive' : ''}
                             />
                             {isDuplicate && (
                                 <Alert variant="destructive" className="py-2">
@@ -165,7 +188,24 @@ export function EditBookmarkDialog({
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="edit-url">URL *</Label>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-url">URL *</Label>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleAISuggest}
+                                    disabled={isAiLoading || isPending}
+                                    className="h-7 text-xs gap-1"
+                                >
+                                    {isAiLoading ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="h-3 w-3" />
+                                    )}
+                                    {isAiLoading ? 'Analyzing...' : 'AI Suggest'}
+                                </Button>
+                            </div>
                             <Input
                                 id="edit-url"
                                 name="url"
@@ -185,16 +225,25 @@ export function EditBookmarkDialog({
                                 name="description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Add a brief description of this bookmark..."
+                                placeholder="Add a brief description..."
                                 disabled={isPending}
-                                rows={3}
+                                rows={2}
                                 className="resize-none"
                             />
                         </div>
 
                         <div className="grid gap-2">
+                            <Label>Tags (Optional)</Label>
+                            <TagInput tags={tags} onChange={setTags} disabled={isPending} />
+                        </div>
+
+                        <div className="grid gap-2">
                             <Label htmlFor="edit-category">Category</Label>
-                            <Select value={category} onValueChange={setCategory} disabled={isPending}>
+                            <Select
+                                value={category}
+                                onValueChange={setCategory}
+                                disabled={isPending}
+                            >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
@@ -209,7 +258,7 @@ export function EditBookmarkDialog({
                             </Select>
                         </div>
 
-                        {category === "Custom" && (
+                        {category === 'Custom' && (
                             <div className="grid gap-2">
                                 <Label htmlFor="edit-customCategory">Custom Category Name</Label>
                                 <Input

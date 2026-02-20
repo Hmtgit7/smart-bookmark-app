@@ -1,16 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { BookmarkListItem } from "./BookmarkListItem";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
-import { Loader2, BookmarkX } from "lucide-react";
+import { useEffect, useRef, useState } from 'react';
+import { BookmarkListItem } from './BookmarkListItem';
+import { useBookmarkStore } from '@/lib/stores/bookmark-store';
+import { Loader2, BookmarkX } from 'lucide-react';
 
 export function BookmarkListView() {
     const getAllFilteredBookmarks = useBookmarkStore((state) => state.getAllFilteredBookmarks);
     const searchQuery = useBookmarkStore((state) => state.searchQuery);
     const selectedCategory = useBookmarkStore((state) => state.selectedCategory);
+    const selectedTag = useBookmarkStore((state) => state.selectedTag);
 
     const allBookmarks = getAllFilteredBookmarks();
+
     const [displayedCount, setDisplayedCount] = useState(20);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const loaderRef = useRef<HTMLDivElement>(null);
@@ -18,12 +20,12 @@ export function BookmarkListView() {
     const displayedBookmarks = allBookmarks.slice(0, displayedCount);
     const hasMore = displayedCount < allBookmarks.length;
 
-    // Reset displayed count when filters change
+    // Reset on filter changes
     useEffect(() => {
         setDisplayedCount(20);
-    }, [searchQuery, selectedCategory]);
+    }, [searchQuery, selectedCategory, selectedTag]);
 
-    // Infinite scroll observer
+    // Infinite scroll
     useEffect(() => {
         if (!loaderRef.current || !hasMore) return;
 
@@ -31,36 +33,34 @@ export function BookmarkListView() {
             (entries) => {
                 if (entries[0].isIntersecting && !isLoadingMore) {
                     setIsLoadingMore(true);
-                    // Simulate loading delay
                     setTimeout(() => {
                         setDisplayedCount((prev) => Math.min(prev + 20, allBookmarks.length));
                         setIsLoadingMore(false);
-                    }, 500);
+                    }, 400);
                 }
             },
             { threshold: 0.1 }
         );
 
         observer.observe(loaderRef.current);
-
         return () => observer.disconnect();
     }, [hasMore, isLoadingMore, allBookmarks.length]);
 
     if (allBookmarks.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                    <BookmarkX className="h-10 w-10 text-primary" />
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <BookmarkX className="w-8 h-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">
-                    {searchQuery || selectedCategory !== 'All'
-                        ? "No bookmarks found"
-                        : "No bookmarks yet"}
+                <h3 className="text-lg font-semibold mb-1">
+                    {searchQuery || selectedCategory !== 'All' || selectedTag !== 'All'
+                        ? 'No bookmarks found'
+                        : 'No bookmarks yet'}
                 </h3>
-                <p className="text-muted-foreground max-w-sm">
-                    {searchQuery || selectedCategory !== 'All'
-                        ? "Try adjusting your filters or search query."
-                        : "Start building your collection by adding your first bookmark using the button above."}
+                <p className="text-sm text-muted-foreground max-w-sm">
+                    {searchQuery || selectedCategory !== 'All' || selectedTag !== 'All'
+                        ? 'Try adjusting your filters, tags, or search query.'
+                        : 'Start building your collection by adding your first bookmark using the button above.'}
                 </p>
             </div>
         );
@@ -75,25 +75,32 @@ export function BookmarkListView() {
                     title={bookmark.title}
                     url={bookmark.url}
                     description={bookmark.description}
+                    tags={bookmark.tags ?? []}
                     category={bookmark.category}
+                    pinned={bookmark.pinned ?? false}
                     archived={bookmark.archived}
                     archivedAt={bookmark.archived_at}
                     createdAt={bookmark.created_at}
                 />
             ))}
 
-            {/* Infinite scroll loader */}
+            {/* Infinite scroll trigger */}
             {hasMore && (
-                <div ref={loaderRef} className="flex justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <div ref={loaderRef} className="flex justify-center py-6">
+                    {isLoadingMore && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading more...
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* End message */}
+            {/* End of list */}
             {!hasMore && allBookmarks.length > 20 && (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                    You've reached the end of your bookmarks
-                </div>
+                <p className="text-center text-xs text-muted-foreground py-4">
+                    You&apos;ve reached the end · {allBookmarks.length} bookmarks total
+                </p>
             )}
         </div>
     );

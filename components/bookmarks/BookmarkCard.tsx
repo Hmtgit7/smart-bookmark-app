@@ -1,13 +1,26 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Trash2, Loader2, Bookmark, Archive, ArchiveRestore } from "lucide-react";
-import { deleteBookmarkAction, archiveBookmarkAction, unarchiveBookmarkAction } from "@/app/actions/bookmarks";
-import { toast } from "sonner";
-import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
+import { useState, useTransition } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+    ExternalLink,
+    Trash2,
+    Loader2,
+    Bookmark,
+    Archive,
+    ArchiveRestore,
+    Pin,
+    PinOff,
+} from 'lucide-react';
+import {
+    deleteBookmarkAction,
+    archiveBookmarkAction,
+    unarchiveBookmarkAction,
+    pinBookmarkAction,
+} from '@/app/actions/bookmarks';
+import { toast } from 'sonner';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -18,16 +31,18 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { EditBookmarkDialog } from "./EditBookmarkDialog";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+} from '@/components/ui/alert-dialog';
+import { EditBookmarkDialog } from './EditBookmarkDialog';
+import { useBookmarkStore } from '@/lib/stores/bookmark-store';
 
 interface BookmarkCardProps {
     id: string;
     title: string;
     url: string;
     description: string | null;
+    tags: string[];
     category: string;
+    pinned: boolean;
     archived: boolean;
     archivedAt: string | null;
     createdAt: string;
@@ -38,91 +53,102 @@ export function BookmarkCard({
     title,
     url,
     description,
+    tags,
     category,
+    pinned,
     archived,
     archivedAt,
-    createdAt
+    createdAt,
 }: BookmarkCardProps) {
     const [isDeleting, startDeleteTransition] = useTransition();
     const [isArchiving, startArchiveTransition] = useTransition();
+    const [isPinning, startPinTransition] = useTransition();
     const [alertOpen, setAlertOpen] = useState(false);
 
-    const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
+    const updateBookmark = useBookmarkStore((s) => s.updateBookmark);
 
     function handleDelete() {
-        if (isDeleting) return;
-
         startDeleteTransition(async () => {
             const result = await deleteBookmarkAction(id);
-
             if (result.success) {
-                // Broadcast to other tabs
-                bookmarkSyncChannel.notifyDelete(id);
                 toast.success(result.message);
                 setAlertOpen(false);
             } else {
-                toast.error(result.error || "Failed to delete bookmark");
+                toast.error(result.error || 'Failed to delete bookmark');
             }
         });
     }
 
     function handleArchive() {
-        if (isArchiving) return;
-
         startArchiveTransition(async () => {
             const result = archived
                 ? await unarchiveBookmarkAction(id)
                 : await archiveBookmarkAction(id);
-
             if (result.success && result.data) {
                 updateBookmark(id, result.data);
-                // Broadcast to other tabs
-                bookmarkSyncChannel.notifyUpdate(result.data);
                 toast.success(result.message);
             } else {
-                toast.error(result.error || "Failed to update bookmark");
+                toast.error(result.error || 'Failed to update bookmark');
+            }
+        });
+    }
+
+    function handlePin() {
+        startPinTransition(async () => {
+            const result = await pinBookmarkAction(id, !pinned);
+            if (result.success && result.data) {
+                updateBookmark(id, result.data);
+                toast.success(result.message);
+            } else {
+                toast.error(result.error || 'Failed to update pin status');
             }
         });
     }
 
     const getFavicon = (url: string) => {
         try {
-            const domain = new URL(url).hostname;
-            return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=64`;
         } catch {
             return null;
         }
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
+    const formatDate = (dateString: string) =>
+        new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
         });
-    };
 
     const getDomain = (url: string) => {
         try {
-            return new URL(url).hostname.replace("www.", "");
+            return new URL(url).hostname.replace('www.', '');
         } catch {
             return url;
         }
     };
 
     return (
-        <Card className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 ${archived ? 'opacity-75' : ''}`}>
+        <Card
+            className={`group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-2 relative ${archived ? 'opacity-75' : ''} ${pinned ? 'border-primary/40 bg-primary/5' : ''}`}
+        >
+            {pinned && (
+                <div className="absolute -top-2 -right-2 z-10">
+                    <div className="bg-primary rounded-full p-1">
+                        <Pin className="h-3 w-3 text-primary-foreground fill-current" />
+                    </div>
+                </div>
+            )}
             <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                         {getFavicon(url) ? (
                             <img
-                                src={getFavicon(url) || ""}
+                                src={getFavicon(url) || ''}
                                 alt=""
                                 className="w-8 h-8 rounded"
                                 onError={(e) => {
-                                    e.currentTarget.style.display = "none";
+                                    e.currentTarget.style.display = 'none';
                                 }}
                             />
                         ) : (
@@ -130,7 +156,7 @@ export function BookmarkCard({
                         )}
                     </div>
 
-                    <div className="flex items-center space-x-2 ml-4">
+                    <div className="flex items-center space-x-1 ml-4">
                         {!archived && (
                             <Button
                                 variant="ghost"
@@ -155,9 +181,26 @@ export function BookmarkCard({
                                 initialTitle={title}
                                 initialUrl={url}
                                 initialDescription={description}
+                                initialTags={tags}
                                 initialCategory={category}
                             />
                         )}
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={handlePin}
+                            disabled={isPinning}
+                        >
+                            {isPinning ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : pinned ? (
+                                <PinOff className="h-4 w-4" />
+                            ) : (
+                                <Pin className="h-4 w-4" />
+                            )}
+                        </Button>
 
                         <Button
                             variant="ghost"
@@ -194,12 +237,14 @@ export function BookmarkCard({
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Delete Bookmark?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to delete `${title}`? This action cannot be
-                                        undone.
+                                        Are you sure you want to delete {title}? This action cannot
+                                        be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                    <AlertDialogCancel disabled={isDeleting}>
+                                        Cancel
+                                    </AlertDialogCancel>
                                     <AlertDialogAction
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -214,7 +259,7 @@ export function BookmarkCard({
                                                 Deleting...
                                             </>
                                         ) : (
-                                            "Delete"
+                                            'Delete'
                                         )}
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -227,9 +272,7 @@ export function BookmarkCard({
                     <h3 className="font-semibold text-lg line-clamp-2">{title}</h3>
 
                     {description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                            {description}
-                        </p>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
                     )}
 
                     <a
@@ -243,11 +286,26 @@ export function BookmarkCard({
                         <ExternalLink className="w-3 h-3 flex-shrink-0" />
                     </a>
 
+                    {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                            {tags.map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-xs px-2 py-0">
+                                    #{tag}
+                                </Badge>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
                         <div className="flex items-center gap-2">
                             <Badge variant="secondary" className="text-xs">
                                 {category}
                             </Badge>
+                            {pinned && (
+                                <Badge className="text-xs bg-primary/20 text-primary border-0">
+                                    Pinned
+                                </Badge>
+                            )}
                             {archived && (
                                 <Badge variant="outline" className="text-xs">
                                     Archived

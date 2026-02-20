@@ -5,7 +5,10 @@ export interface Bookmark {
     title: string;
     url: string;
     description: string | null;
+    tags: string[];
     category: string;
+    pinned: boolean;
+    pinned_at: string | null;
     archived: boolean;
     archived_at: string | null;
     created_at: string;
@@ -17,6 +20,7 @@ interface BookmarkStore {
     isLoading: boolean;
     searchQuery: string;
     selectedCategory: string;
+    selectedTag: string;
     sortBy: 'newest' | 'oldest' | 'alphabetical';
     currentPage: number;
     itemsPerPage: number;
@@ -30,6 +34,7 @@ interface BookmarkStore {
     setLoading: (loading: boolean) => void;
     setSearchQuery: (query: string) => void;
     setSelectedCategory: (category: string) => void;
+    setSelectedTag: (tag: string) => void;
     setSortBy: (sortBy: 'newest' | 'oldest' | 'alphabetical') => void;
     setCurrentPage: (page: number) => void;
     setShowArchived: (show: boolean) => void;
@@ -38,8 +43,58 @@ interface BookmarkStore {
     getFilteredBookmarks: () => Bookmark[];
     getAllFilteredBookmarks: () => Bookmark[];
     getCategories: () => string[];
+    getAllTags: () => string[];
     getTotalPages: () => number;
     checkDuplicateTitle: (title: string, excludeId?: string) => boolean;
+}
+
+function applyFilters(
+    bookmarks: Bookmark[],
+    showArchived: boolean,
+    searchQuery: string,
+    selectedCategory: string,
+    selectedTag: string,
+    sortBy: string
+): Bookmark[] {
+    let filtered = bookmarks.filter((b) => b.archived === showArchived);
+
+    if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(
+            (b) =>
+                b.title.toLowerCase().includes(query) ||
+                b.url.toLowerCase().includes(query) ||
+                b.description?.toLowerCase().includes(query) ||
+                b.tags.some((t) => t.toLowerCase().includes(query))
+        );
+    }
+
+    if (selectedCategory !== 'All') {
+        filtered = filtered.filter((b) => b.category === selectedCategory);
+    }
+
+    if (selectedTag !== 'All') {
+        filtered = filtered.filter((b) => b.tags.includes(selectedTag));
+    }
+
+    filtered.sort((a, b) => {
+        // Pinned always on top
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+
+        switch (sortBy) {
+            case 'newest':
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            case 'oldest':
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+            case 'alphabetical':
+                return a.title.localeCompare(b.title);
+            default:
+                return 0;
+        }
+    });
+
+    return filtered;
 }
 
 export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
@@ -47,6 +102,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     isLoading: true,
     searchQuery: '',
     selectedCategory: 'All',
+    selectedTag: 'All',
     sortBy: 'newest',
     currentPage: 1,
     itemsPerPage: 9,
@@ -57,7 +113,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
     addBookmark: (bookmark) => {
         const state = get();
-        const exists = state.bookmarks.some(b => b.id === bookmark.id);
+        const exists = state.bookmarks.some((b) => b.id === bookmark.id);
         if (!exists) {
             set({ bookmarks: [bookmark, ...state.bookmarks] });
         }
@@ -65,150 +121,109 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
 
     updateBookmark: (id, updatedData) => {
         set((state) => ({
-            bookmarks: state.bookmarks.map((bookmark) =>
-                bookmark.id === id ? { ...bookmark, ...updatedData } : bookmark
-            ),
+            bookmarks: state.bookmarks.map((b) => (b.id === id ? { ...b, ...updatedData } : b)),
         }));
     },
 
     deleteBookmark: (id) => {
         set((state) => ({
-            bookmarks: state.bookmarks.filter((bookmark) => bookmark.id !== id),
+            bookmarks: state.bookmarks.filter((b) => b.id !== id),
         }));
     },
 
     setLoading: (loading) => set({ isLoading: loading }),
     setSearchQuery: (query) => set({ searchQuery: query, currentPage: 1 }),
     setSelectedCategory: (category) => set({ selectedCategory: category, currentPage: 1 }),
+    setSelectedTag: (tag) => set({ selectedTag: tag, currentPage: 1 }),
     setSortBy: (sortBy) => set({ sortBy, currentPage: 1 }),
     setCurrentPage: (page) => set({ currentPage: page }),
     setShowArchived: (show) => set({ showArchived: show, currentPage: 1 }),
     setViewMode: (mode) => set({ viewMode: mode, currentPage: 1 }),
 
     getFilteredBookmarks: () => {
-        const state = get();
-        let filtered = [...state.bookmarks];
+        const {
+            bookmarks,
+            showArchived,
+            searchQuery,
+            selectedCategory,
+            selectedTag,
+            sortBy,
+            viewMode,
+            currentPage,
+            itemsPerPage,
+        } = get();
+        const filtered = applyFilters(
+            bookmarks,
+            showArchived,
+            searchQuery,
+            selectedCategory,
+            selectedTag,
+            sortBy
+        );
 
-        filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
-
-        if (state.searchQuery) {
-            const query = state.searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                (bookmark) =>
-                    bookmark.title.toLowerCase().includes(query) ||
-                    bookmark.url.toLowerCase().includes(query) ||
-                    bookmark.description?.toLowerCase().includes(query)
-            );
-        }
-
-        if (state.selectedCategory !== 'All') {
-            filtered = filtered.filter(
-                (bookmark) => bookmark.category === state.selectedCategory
-            );
-        }
-
-        filtered.sort((a, b) => {
-            switch (state.sortBy) {
-                case 'newest':
-                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-                case 'oldest':
-                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-                case 'alphabetical':
-                    return a.title.localeCompare(b.title);
-                default:
-                    return 0;
-            }
-        });
-
-        if (state.viewMode === 'grid') {
-            const start = (state.currentPage - 1) * state.itemsPerPage;
-            const end = start + state.itemsPerPage;
-            return filtered.slice(start, end);
+        if (viewMode === 'grid') {
+            const start = (currentPage - 1) * itemsPerPage;
+            return filtered.slice(start, start + itemsPerPage);
         }
 
         return filtered;
     },
 
     getAllFilteredBookmarks: () => {
-        const state = get();
-        let filtered = [...state.bookmarks];
-
-        filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
-
-        if (state.searchQuery) {
-            const query = state.searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                (bookmark) =>
-                    bookmark.title.toLowerCase().includes(query) ||
-                    bookmark.url.toLowerCase().includes(query) ||
-                    bookmark.description?.toLowerCase().includes(query)
-            );
-        }
-
-        if (state.selectedCategory !== 'All') {
-            filtered = filtered.filter(
-                (bookmark) => bookmark.category === state.selectedCategory
-            );
-        }
-
-        filtered.sort((a, b) => {
-            switch (state.sortBy) {
-                case 'newest':
-                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-                case 'oldest':
-                    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-                case 'alphabetical':
-                    return a.title.localeCompare(b.title);
-                default:
-                    return 0;
-            }
-        });
-
-        return filtered;
+        const { bookmarks, showArchived, searchQuery, selectedCategory, selectedTag, sortBy } =
+            get();
+        return applyFilters(
+            bookmarks,
+            showArchived,
+            searchQuery,
+            selectedCategory,
+            selectedTag,
+            sortBy
+        );
     },
 
     getCategories: () => {
-        const state = get();
+        const { bookmarks, showArchived } = get();
         const categories = new Set(
-            state.bookmarks
-                .filter(b => b.archived === state.showArchived)
-                .map(b => b.category)
+            bookmarks.filter((b) => b.archived === showArchived).map((b) => b.category)
         );
         return ['All', ...Array.from(categories).sort()];
     },
 
-    getTotalPages: () => {
-        const state = get();
-        let filtered = [...state.bookmarks];
-
-        filtered = filtered.filter(bookmark => bookmark.archived === state.showArchived);
-
-        if (state.searchQuery) {
-            const query = state.searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                (bookmark) =>
-                    bookmark.title.toLowerCase().includes(query) ||
-                    bookmark.url.toLowerCase().includes(query) ||
-                    bookmark.description?.toLowerCase().includes(query)
-            );
-        }
-
-        if (state.selectedCategory !== 'All') {
-            filtered = filtered.filter(
-                (bookmark) => bookmark.category === state.selectedCategory
-            );
-        }
-
-        return Math.ceil(filtered.length / state.itemsPerPage);
+    getAllTags: () => {
+        const { bookmarks, showArchived } = get();
+        const tags = new Set(
+            bookmarks.filter((b) => b.archived === showArchived).flatMap((b) => b.tags)
+        );
+        return ['All', ...Array.from(tags).sort()];
     },
 
-    checkDuplicateTitle: (title: string, excludeId?: string) => {
-        const state = get();
-        return state.bookmarks.some(
-            (bookmark) =>
-                bookmark.title.toLowerCase() === title.toLowerCase() &&
-                bookmark.id !== excludeId &&
-                !bookmark.archived
+    getTotalPages: () => {
+        const {
+            bookmarks,
+            showArchived,
+            searchQuery,
+            selectedCategory,
+            selectedTag,
+            sortBy,
+            itemsPerPage,
+        } = get();
+        const filtered = applyFilters(
+            bookmarks,
+            showArchived,
+            searchQuery,
+            selectedCategory,
+            selectedTag,
+            sortBy
+        );
+        return Math.ceil(filtered.length / itemsPerPage);
+    },
+
+    checkDuplicateTitle: (title, excludeId) => {
+        const { bookmarks } = get();
+        return bookmarks.some(
+            (b) =>
+                b.title.toLowerCase() === title.toLowerCase() && b.id !== excludeId && !b.archived
         );
     },
 }));

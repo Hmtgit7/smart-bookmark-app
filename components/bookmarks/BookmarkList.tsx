@@ -1,167 +1,169 @@
-"use client";
+'use client';
 
-import { useEffect, useCallback } from "react";
-import { BookmarkCard } from "./BookmarkCard";
-import { BookmarkListView } from "./BookmarkListView";
-import { BookmarkFilters } from "./BookmarkFilters";
-import { BookmarkPagination } from "./BookmarkPagination";
-import { createClient } from "@/lib/supabase/client";
-import { Loader2, BookmarkX } from "lucide-react";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
-import { bookmarkSyncChannel } from "@/lib/stores/bookmark-sync";
+import { useEffect, useCallback } from 'react';
+import { BookmarkCard } from './BookmarkCard';
+import { BookmarkListView } from './BookmarkListView';
+import { BookmarkFilters } from './BookmarkFilters';
+import { BookmarkPagination } from './BookmarkPagination';
+import { createClient } from '@/lib/supabase/client';
+import { Loader2, BookmarkX } from 'lucide-react';
+import { useBookmarkStore } from '@/lib/stores/bookmark-store';
+import { bookmarkSyncChannel } from '@/lib/stores/bookmark-sync';
 
 interface BookmarkListProps {
-  userId: string;
+    userId: string;
 }
 
 export function BookmarkList({ userId }: BookmarkListProps) {
-  const {
-    isLoading,
-    viewMode,
-    setBookmarks,
-    addBookmark,
-    updateBookmark,
-    deleteBookmark,
-    getFilteredBookmarks,
-    searchQuery,
-    selectedCategory
-  } = useBookmarkStore();
+    const {
+        isLoading,
+        viewMode,
+        setBookmarks,
+        addBookmark,
+        updateBookmark,
+        deleteBookmark,
+        getFilteredBookmarks,
+        searchQuery,
+        selectedCategory,
+    } = useBookmarkStore();
 
-  const filteredBookmarks = getFilteredBookmarks();
+    const filteredBookmarks = getFilteredBookmarks();
 
-  // Function to fetch bookmarks - extracted for reuse
-  const fetchBookmarks = useCallback(async () => {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from("bookmarks")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+    // Function to fetch bookmarks - extracted for reuse
+    const fetchBookmarks = useCallback(async () => {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('bookmarks')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setBookmarks(data);
-    } else if (error) {
-      setBookmarks([]);
-    }
-  }, [userId, setBookmarks]);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    fetchBookmarks();
-
-    // Subscribe to Supabase Realtime changes
-    const channel = supabase
-      .channel('bookmarks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bookmarks',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          switch (payload.eventType) {
-            case 'INSERT':
-              addBookmark(payload.new as any);
-              break;
-            case 'UPDATE':
-              updateBookmark(payload.new.id, payload.new as any);
-              break;
-            case 'DELETE':
-              deleteBookmark(payload.old.id);
-              break;
-          }
+        if (!error && data) {
+            setBookmarks(data);
+        } else if (error) {
+            setBookmarks([]);
         }
-      )
-      .subscribe();
+    }, [userId, setBookmarks]);
 
-    // Subscribe to cross-tab sync messages via BroadcastChannel
-    const unsubscribeSync = bookmarkSyncChannel.subscribe((message) => {
-      switch (message.type) {
-        case 'INSERT':
-          if (message.bookmark) {
-            addBookmark(message.bookmark);
-          }
-          break;
-        case 'UPDATE':
-          if (message.bookmark) {
-            updateBookmark(message.bookmark.id, message.bookmark);
-          }
-          break;
-        case 'DELETE':
-          if (message.bookmarkId) {
-            deleteBookmark(message.bookmarkId);
-          }
-          break;
-        case 'REFRESH':
-          fetchBookmarks();
-          break;
-      }
-    });
+    useEffect(() => {
+        const supabase = createClient();
 
-    return () => {
-      supabase.removeChannel(channel);
-      unsubscribeSync();
-    };
-  }, [userId, setBookmarks, addBookmark, updateBookmark, deleteBookmark, fetchBookmarks]);
+        fetchBookmarks();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+        // Subscribe to Supabase Realtime changes
+        const channel = supabase
+            .channel('bookmarks-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'bookmarks',
+                    filter: `user_id=eq.${userId}`,
+                },
+                (payload) => {
+                    switch (payload.eventType) {
+                        case 'INSERT':
+                            addBookmark(payload.new as any);
+                            break;
+                        case 'UPDATE':
+                            updateBookmark(payload.new.id, payload.new as any);
+                            break;
+                        case 'DELETE':
+                            deleteBookmark(payload.old.id);
+                            break;
+                    }
+                }
+            )
+            .subscribe();
 
-  return (
-    <div>
-      <BookmarkFilters />
+        // Subscribe to cross-tab sync messages via BroadcastChannel
+        const unsubscribeSync = bookmarkSyncChannel.subscribe((message) => {
+            switch (message.type) {
+                case 'INSERT':
+                    if (message.bookmark) {
+                        addBookmark(message.bookmark);
+                    }
+                    break;
+                case 'UPDATE':
+                    if (message.bookmark) {
+                        updateBookmark(message.bookmark.id, message.bookmark);
+                    }
+                    break;
+                case 'DELETE':
+                    if (message.bookmarkId) {
+                        deleteBookmark(message.bookmarkId);
+                    }
+                    break;
+                case 'REFRESH':
+                    fetchBookmarks();
+                    break;
+            }
+        });
 
-      {viewMode === 'list' ? (
-        <BookmarkListView />
-      ) : (
-        <>
-          {filteredBookmarks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <BookmarkX className="h-10 w-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                {searchQuery || selectedCategory !== 'All'
-                  ? "No bookmarks found"
-                  : "No bookmarks yet"}
-              </h3>
-              <p className="text-muted-foreground max-w-sm">
-                {searchQuery || selectedCategory !== 'All'
-                  ? "Try adjusting your filters or search query."
-                  : "Start building your collection by adding your first bookmark using the button above."}
-              </p>
+        return () => {
+            supabase.removeChannel(channel);
+            unsubscribeSync();
+        };
+    }, [userId, setBookmarks, addBookmark, updateBookmark, deleteBookmark, fetchBookmarks]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredBookmarks.map((bookmark) => (
-                  <BookmarkCard
-                    key={bookmark.id}
-                    id={bookmark.id}
-                    title={bookmark.title}
-                    url={bookmark.url}
-                    description={bookmark.description}
-                    category={bookmark.category}
-                    archived={bookmark.archived}
-                    archivedAt={bookmark.archived_at}
-                    createdAt={bookmark.created_at}
-                  />
-                ))}
-              </div>
+        );
+    }
 
-              <BookmarkPagination />
-            </>
-          )}
-        </>
-      )}
-    </div>
-  );
+    return (
+        <div>
+            <BookmarkFilters />
+
+            {viewMode === 'list' ? (
+                <BookmarkListView />
+            ) : (
+                <>
+                    {filteredBookmarks.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                                <BookmarkX className="h-10 w-10 text-primary" />
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2">
+                                {searchQuery || selectedCategory !== 'All'
+                                    ? 'No bookmarks found'
+                                    : 'No bookmarks yet'}
+                            </h3>
+                            <p className="text-muted-foreground max-w-sm">
+                                {searchQuery || selectedCategory !== 'All'
+                                    ? 'Try adjusting your filters or search query.'
+                                    : 'Start building your collection by adding your first bookmark using the button above.'}
+                            </p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredBookmarks.map((bookmark) => (
+                                    <BookmarkCard
+                                        key={bookmark.id}
+                                        id={bookmark.id}
+                                        title={bookmark.title}
+                                        url={bookmark.url}
+                                        description={bookmark.description}
+                                        tags={bookmark.tags || []}
+                                        category={bookmark.category}
+                                        pinned={bookmark.pinned}
+                                        archived={bookmark.archived}
+                                        archivedAt={bookmark.archived_at}
+                                        createdAt={bookmark.created_at}
+                                    />
+                                ))}
+                            </div>
+
+                            <BookmarkPagination />
+                        </>
+                    )}
+                </>
+            )}
+        </div>
+    );
 }
