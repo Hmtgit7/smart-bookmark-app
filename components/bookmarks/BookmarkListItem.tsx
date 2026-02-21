@@ -127,16 +127,21 @@ export function BookmarkListItem({
             setShowPasswordDialog(true);
         } else {
             // Making private - check if user already has a password
-            checkHasPrivatePasswordAction().then(result => {
-                if (result.hasPassword) {
-                    // User has existing private bookmarks, verify password
-                    setPasswordMode('verify');
-                } else {
-                    // First time making something private, set password
-                    setPasswordMode('set');
-                }
-                setShowPasswordDialog(true);
-            });
+            checkHasPrivatePasswordAction()
+                .then((result) => {
+                    if (result.hasPassword) {
+                        // User has existing private bookmarks, verify password
+                        setPasswordMode('verify');
+                    } else {
+                        // First time making something private, set password
+                        setPasswordMode('set');
+                    }
+                    setShowPasswordDialog(true);
+                })
+                .catch((error) => {
+                    console.error('Failed to check private password:', error);
+                    toast.error('Failed to check private password status. Please try again.');
+                });
         }
     }
 

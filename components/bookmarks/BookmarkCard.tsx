@@ -26,6 +26,7 @@ import {
     checkHasPrivatePasswordAction,
 } from '@/app/actions/bookmarks';
 import { toast } from 'sonner';
+import { bookmarkSyncChannel } from '@/lib/stores/bookmark-sync';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -124,16 +125,21 @@ export function BookmarkCard({
             setShowPasswordDialog(true);
         } else {
             // Making private - check if user already has a password
-            checkHasPrivatePasswordAction().then(result => {
-                if (result.hasPassword) {
-                    // User has existing private bookmarks, verify password
-                    setPasswordMode('verify');
-                } else {
-                    // First time making something private, set password
-                    setPasswordMode('set');
-                }
-                setShowPasswordDialog(true);
-            });
+            checkHasPrivatePasswordAction()
+                .then((result) => {
+                    if (result.hasPassword) {
+                        // User has existing private bookmarks, verify password
+                        setPasswordMode('verify');
+                    } else {
+                        // First time making something private, set password
+                        setPasswordMode('set');
+                    }
+                    setShowPasswordDialog(true);
+                })
+                .catch((error) => {
+                    console.error('Failed to check private password status:', error);
+                    toast.error('Failed to check private password status. Please try again.');
+                });
         }
     }
 
@@ -143,6 +149,7 @@ export function BookmarkCard({
                 const result = await togglePrivateBookmarkAction(id, password);
                 if (result.success && result.data) {
                     updateBookmark(id, result.data);
+                    bookmarkSyncChannel.notifyUpdate(result.data);
                     toast.success(result.message);
                     resolve();
                 } else {
