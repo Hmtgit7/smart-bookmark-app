@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Bookmark, LogOut, Moon, Sun, Menu } from "lucide-react";
+import { Bookmark, LogOut, Moon, Sun, Menu, Lock, Home } from "lucide-react";
 import { useTheme } from "next-themes";
 import { signOutAction } from "@/app/actions/auth";
 import {
@@ -29,6 +31,7 @@ export function Navbar({ userEmail }: NavbarProps) {
     const { theme, setTheme } = useTheme();
     const [open, setOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const pathname = usePathname();
 
     // Prevent hydration mismatch
     useEffect(() => {
@@ -76,6 +79,28 @@ export function Navbar({ userEmail }: NavbarProps) {
 
                     {/* Desktop Right Side */}
                     <div className="hidden sm:flex items-center space-x-2 sm:space-x-4">
+                        {/* Navigation Links */}
+                        <Link href="/dashboard">
+                            <Button
+                                variant={pathname === "/dashboard" ? "default" : "ghost"}
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <Home className="h-4 w-4" />
+                                <span className="hidden md:inline">Dashboard</span>
+                            </Button>
+                        </Link>
+                        <Link href="/private">
+                            <Button
+                                variant={pathname === "/private" ? "default" : "ghost"}
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <Lock className="h-4 w-4" />
+                                <span className="hidden md:inline">Private</span>
+                            </Button>
+                        </Link>
+
                         {/* Theme Toggle */}
                         <Button
                             variant="ghost"
@@ -143,6 +168,28 @@ export function Navbar({ userEmail }: NavbarProps) {
                                     <SheetTitle>Account</SheetTitle>
                                 </SheetHeader>
                                 <div className="flex flex-col space-y-4 mt-8">
+                                    {/* Navigation Links */}
+                                    <div className="flex flex-col space-y-2 pb-4 border-b">
+                                        <Link href="/dashboard" onClick={() => setOpen(false)}>
+                                            <Button
+                                                variant={pathname === "/dashboard" ? "default" : "ghost"}
+                                                className="w-full justify-start gap-2"
+                                            >
+                                                <Home className="h-4 w-4" />
+                                                Dashboard
+                                            </Button>
+                                        </Link>
+                                        <Link href="/private" onClick={() => setOpen(false)}>
+                                            <Button
+                                                variant={pathname === "/private" ? "default" : "ghost"}
+                                                className="w-full justify-start gap-2"
+                                            >
+                                                <Lock className="h-4 w-4" />
+                                                Private Bookmarks
+                                            </Button>
+                                        </Link>
+                                    </div>
+
                                     <div className="flex items-center space-x-3 pb-4 border-b p-2">
                                         <Avatar className="h-12 w-12">
                                             <AvatarFallback className="bg-primary/10 text-primary font-semibold">

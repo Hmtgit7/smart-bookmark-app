@@ -11,6 +11,7 @@ export interface Bookmark {
     pinned_at: string | null;
     archived: boolean;
     archived_at: string | null;
+    is_private: boolean;
     created_at: string;
     user_id: string;
 }
@@ -26,6 +27,7 @@ interface BookmarkStore {
     itemsPerPage: number;
     showArchived: boolean;
     viewMode: 'grid' | 'list';
+    showPrivateOnly: boolean;
 
     setBookmarks: (bookmarks: Bookmark[]) => void;
     addBookmark: (bookmark: Bookmark) => void;
@@ -39,6 +41,7 @@ interface BookmarkStore {
     setCurrentPage: (page: number) => void;
     setShowArchived: (show: boolean) => void;
     setViewMode: (mode: 'grid' | 'list') => void;
+    setShowPrivateOnly: (show: boolean) => void;
 
     getFilteredBookmarks: () => Bookmark[];
     getAllFilteredBookmarks: () => Bookmark[];
@@ -55,9 +58,17 @@ function applyFilters(
     searchQuery: string,
     selectedCategory: string,
     selectedTag: string,
-    sortBy: string
+    sortBy: string,
+    showPrivateOnly: boolean
 ): Bookmark[] {
     let filtered = bookmarks.filter((b) => b.archived === showArchived);
+
+    // Filter by private/public
+    if (showPrivateOnly) {
+        filtered = filtered.filter((b) => b.is_private === true);
+    } else {
+        filtered = filtered.filter((b) => b.is_private === false);
+    }
 
     if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -109,6 +120,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     itemsPerPage: 9,
     showArchived: false,
     viewMode: 'grid',
+    showPrivateOnly: false,
 
     setBookmarks: (bookmarks) => set({ bookmarks, isLoading: false }),
 
@@ -140,6 +152,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     setCurrentPage: (page) => set({ currentPage: page }),
     setShowArchived: (show) => set({ showArchived: show, currentPage: 1 }),
     setViewMode: (mode) => set({ viewMode: mode, currentPage: 1 }),
+    setShowPrivateOnly: (show) => set({ showPrivateOnly: show, currentPage: 1 }),
 
     getFilteredBookmarks: () => {
         const {
@@ -152,6 +165,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             viewMode,
             currentPage,
             itemsPerPage,
+            showPrivateOnly,
         } = get();
         const filtered = applyFilters(
             bookmarks,
@@ -159,7 +173,8 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             searchQuery,
             selectedCategory,
             selectedTag,
-            sortBy
+            sortBy,
+            showPrivateOnly
         );
 
         if (viewMode === 'grid') {
@@ -171,7 +186,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     },
 
     getAllFilteredBookmarks: () => {
-        const { bookmarks, showArchived, searchQuery, selectedCategory, selectedTag, sortBy } =
+        const { bookmarks, showArchived, searchQuery, selectedCategory, selectedTag, sortBy, showPrivateOnly } =
             get();
         return applyFilters(
             bookmarks,
@@ -179,22 +194,27 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             searchQuery,
             selectedCategory,
             selectedTag,
-            sortBy
+            sortBy,
+            showPrivateOnly
         );
     },
 
     getCategories: () => {
-        const { bookmarks, showArchived } = get();
+        const { bookmarks, showArchived, showPrivateOnly } = get();
         const categories = new Set(
-            bookmarks.filter((b) => b.archived === showArchived).map((b) => b.category)
+            bookmarks
+                .filter((b) => b.archived === showArchived && (showPrivateOnly ? b.is_private : !b.is_private))
+                .map((b) => b.category)
         );
         return ['All', ...Array.from(categories).sort()];
     },
 
     getAllTags: () => {
-        const { bookmarks, showArchived } = get();
+        const { bookmarks, showArchived, showPrivateOnly } = get();
         const tags = new Set(
-            bookmarks.filter((b) => b.archived === showArchived).flatMap((b) => b.tags)
+            bookmarks
+                .filter((b) => b.archived === showArchived && (showPrivateOnly ? b.is_private : !b.is_private))
+                .flatMap((b) => b.tags)
         );
         return ['All', ...Array.from(tags).sort()];
     },
@@ -208,6 +228,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             selectedTag,
             sortBy,
             itemsPerPage,
+            showPrivateOnly,
         } = get();
         const filtered = applyFilters(
             bookmarks,
@@ -215,7 +236,8 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
             searchQuery,
             selectedCategory,
             selectedTag,
-            sortBy
+            sortBy,
+            showPrivateOnly
         );
         return Math.ceil(filtered.length / itemsPerPage);
     },
