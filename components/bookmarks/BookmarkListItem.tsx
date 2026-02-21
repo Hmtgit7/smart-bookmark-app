@@ -13,12 +13,16 @@ import {
     Pin,
     PinOff,
     Tag,
+    Lock,
+    LockOpen,
 } from 'lucide-react';
 import {
     deleteBookmarkAction,
     archiveBookmarkAction,
     unarchiveBookmarkAction,
     pinBookmarkAction,
+    togglePrivateBookmarkAction,
+    checkHasPrivatePasswordAction,
 } from '@/app/actions/bookmarks';
 import { toast } from 'sonner';
 import { bookmarkSyncChannel } from '@/lib/stores/bookmark-sync';
@@ -34,6 +38,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { EditBookmarkDialog } from './EditBookmarkDialog';
+import { PrivatePasswordDialog } from './PrivatePasswordDialog';
 import { useBookmarkStore } from '@/lib/stores/bookmark-store';
 
 interface BookmarkListItemProps {
@@ -47,6 +52,7 @@ interface BookmarkListItemProps {
     archived: boolean;
     archivedAt: string | null;
     createdAt: string;
+    isPrivate: boolean;
 }
 
 export function BookmarkListItem({
@@ -60,11 +66,15 @@ export function BookmarkListItem({
     archived,
     archivedAt,
     createdAt,
+    isPrivate,
 }: BookmarkListItemProps) {
     const [isDeleting, startDeleteTransition] = useTransition();
     const [isArchiving, startArchiveTransition] = useTransition();
     const [isPinning, startPinTransition] = useTransition();
     const [alertOpen, setAlertOpen] = useState(false);
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+    const [isTogglingPrivate, startPrivateTransition] = useTransition();
+    const [passwordMode, setPasswordMode] = useState<'set' | 'verify'>('set');
 
     const updateBookmark = useBookmarkStore((state) => state.updateBookmark);
 
@@ -106,6 +116,50 @@ export function BookmarkListItem({
             } else {
                 toast.error(result.error || 'Failed to update pin status');
             }
+        });
+    }
+
+    function handlePrivateToggle() {
+        // Check if making private or public
+        if (isPrivate) {
+            // Making public - always verify
+            setPasswordMode('verify');
+            setShowPasswordDialog(true);
+        } else {
+            // Making private - check if user already has a password
+            checkHasPrivatePasswordAction()
+                .then((result) => {
+                    if (result.hasPassword) {
+                        // User has existing private bookmarks, verify password
+                        setPasswordMode('verify');
+                    } else {
+                        // First time making something private, set password
+                        setPasswordMode('set');
+                    }
+                    setShowPasswordDialog(true);
+                })
+                .catch((error) => {
+                    console.error('Failed to check private password:', error);
+                    toast.error('Failed to check private password status. Please try again.');
+                });
+        }
+    }
+
+    async function handlePrivatePasswordConfirm(password: string) {
+        return new Promise<void>((resolve, reject) => {
+            startPrivateTransition(async () => {
+                const result = await togglePrivateBookmarkAction(id, password);
+                if (result.success && result.data) {
+                    updateBookmark(id, result.data);
+                    bookmarkSyncChannel.notifyUpdate(result.data);
+                    toast.success(result.message);
+                    resolve();
+                } else {
+                    const error = result.error || 'Failed to toggle private status';
+                    toast.error(error);
+                    reject(new Error(error));
+                }
+            });
         });
     }
 
@@ -177,6 +231,12 @@ export function BookmarkListItem({
                     {archived && (
                         <Badge variant="outline" className="text-xs flex-shrink-0">
                             Archived
+                        </Badge>
+                    )}
+                    {isPrivate && (
+                        <Badge className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-400 border-0 gap-1 flex-shrink-0">
+                            <Lock className="h-3 w-3" />
+                            Private
                         </Badge>
                     )}
                 </div>
@@ -266,6 +326,24 @@ export function BookmarkListItem({
                     )}
                 </Button>
 
+                {!archived && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrivateToggle}
+                        disabled={isTogglingPrivate || isDeleting || isArchiving || isPinning}
+                        title={isPrivate ? 'Make Public' : 'Make Private'}
+                    >
+                        {isTogglingPrivate ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : isPrivate ? (
+                            <LockOpen className="h-4 w-4" />
+                        ) : (
+                            <Lock className="h-4 w-4" />
+                        )}
+                    </Button>
+                )}
+
                 <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
                     <AlertDialogTrigger asChild>
                         <Button
@@ -313,6 +391,27 @@ export function BookmarkListItem({
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
+            <PrivatePasswordDialog
+                open={showPasswordDialog}
+                onOpenChange={setShowPasswordDialog}
+                mode={passwordMode}
+                title={isPrivate ? 'Make Bookmark Public' : passwordMode === 'set' ? 'Set Password for Private Bookmarks' : 'Make Bookmark Private'}
+                description={
+                    isPrivate
+                        ? 'Enter your password to make this bookmark public.'
+                        : passwordMode === 'set'
+                        ? 'Set a password to protect your private bookmarks. You\'ll use this same password for all private bookmarks.'
+                        : 'Enter the password you set for your private bookmarks.'
+                }
+                buttonText={
+                    isPrivate 
+                        ? 'Make Public' 
+                        : passwordMode === 'set' 
+                        ? 'Set Password & Make Private' 
+                        : 'Make Private'
+                }
+                onConfirm={handlePrivatePasswordConfirm}
+            />
         </div>
     );
 }

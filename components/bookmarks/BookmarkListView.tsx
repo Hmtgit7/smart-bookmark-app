@@ -81,6 +81,7 @@ export function BookmarkListView() {
                     archived={bookmark.archived}
                     archivedAt={bookmark.archived_at}
                     createdAt={bookmark.created_at}
+                    isPrivate={bookmark.is_private}
                 />
             ))}
 

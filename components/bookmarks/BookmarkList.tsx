@@ -155,6 +155,7 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                                         archived={bookmark.archived}
                                         archivedAt={bookmark.archived_at}
                                         createdAt={bookmark.created_at}
+                                        isPrivate={bookmark.is_private}
                                     />
                                 ))}
                             </div>
