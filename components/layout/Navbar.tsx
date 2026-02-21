@@ -1,27 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Bookmark, LogOut, Moon, Sun, Menu, Lock, Home } from "lucide-react";
-import { useTheme } from "next-themes";
-import { signOutAction } from "@/app/actions/auth";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Bookmark, LogOut, Moon, Sun, Menu, Lock, Home } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { signOutAction } from '@/app/actions/auth';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface NavbarProps {
     userEmail?: string;
@@ -82,7 +76,7 @@ export function Navbar({ userEmail }: NavbarProps) {
                         {/* Navigation Links */}
                         <Link href="/dashboard">
                             <Button
-                                variant={pathname === "/dashboard" ? "default" : "ghost"}
+                                variant={pathname === '/dashboard' ? 'default' : 'ghost'}
                                 size="sm"
                                 className="gap-2"
                             >
@@ -90,9 +84,19 @@ export function Navbar({ userEmail }: NavbarProps) {
                                 <span className="hidden md:inline">Dashboard</span>
                             </Button>
                         </Link>
+                        <Link href="/my-bookmarks">
+                            <Button
+                                variant={pathname === '/my-bookmarks' ? 'default' : 'ghost'}
+                                size="sm"
+                                className="gap-2"
+                            >
+                                <Bookmark className="h-4 w-4" />
+                                <span className="hidden md:inline">My Bookmarks</span>
+                            </Button>
+                        </Link>
                         <Link href="/private">
                             <Button
-                                variant={pathname === "/private" ? "default" : "ghost"}
+                                variant={pathname === '/private' ? 'default' : 'ghost'}
                                 size="sm"
                                 className="gap-2"
                             >
@@ -105,7 +109,7 @@ export function Navbar({ userEmail }: NavbarProps) {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         >
                             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -115,10 +119,13 @@ export function Navbar({ userEmail }: NavbarProps) {
                         {/* User Menu */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full">
+                                <Button
+                                    variant="ghost"
+                                    className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full"
+                                >
                                     <Avatar>
                                         <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm sm:text-base">
-                                            {userEmail ? getInitials(userEmail) : "U"}
+                                            {userEmail ? getInitials(userEmail) : 'U'}
                                         </AvatarFallback>
                                     </Avatar>
                                 </Button>
@@ -127,7 +134,9 @@ export function Navbar({ userEmail }: NavbarProps) {
                                 <div className="flex items-center justify-start gap-2 p-2">
                                     <div className="flex flex-col space-y-1">
                                         <p className="text-sm font-medium truncate">{userEmail}</p>
-                                        <p className="text-xs text-muted-foreground">Manage your bookmarks</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Manage your bookmarks
+                                        </p>
                                     </div>
                                 </div>
                                 <DropdownMenuSeparator />
@@ -149,7 +158,7 @@ export function Navbar({ userEmail }: NavbarProps) {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         >
                             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -163,46 +172,74 @@ export function Navbar({ userEmail }: NavbarProps) {
                                     <Menu className="h-6 w-6" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="right" className="w-[300px]">
-                                <SheetHeader>
-                                    <SheetTitle>Account</SheetTitle>
+                            <SheetContent side="right" className="w-[300px] flex flex-col">
+                                <SheetHeader className="border-b pb-4">
+                                    <SheetTitle>Menu</SheetTitle>
                                 </SheetHeader>
-                                <div className="flex flex-col space-y-4 mt-8">
-                                    {/* Navigation Links */}
-                                    <div className="flex flex-col space-y-2 pb-4 border-b">
-                                        <Link href="/dashboard" onClick={() => setOpen(false)}>
-                                            <Button
-                                                variant={pathname === "/dashboard" ? "default" : "ghost"}
-                                                className="w-full justify-start gap-2"
-                                            >
-                                                <Home className="h-4 w-4" />
-                                                Dashboard
-                                            </Button>
-                                        </Link>
-                                        <Link href="/private" onClick={() => setOpen(false)}>
-                                            <Button
-                                                variant={pathname === "/private" ? "default" : "ghost"}
-                                                className="w-full justify-start gap-2"
-                                            >
-                                                <Lock className="h-4 w-4" />
-                                                Private Bookmarks
-                                            </Button>
-                                        </Link>
-                                    </div>
 
-                                    <div className="flex items-center space-x-3 pb-4 border-b p-2">
+                                {/* Navigation Links */}
+                                <div className="flex flex-col space-y-2 mt-8 p-2">
+                                    <Link href="/dashboard" onClick={() => setOpen(false)}>
+                                        <Button
+                                            variant={
+                                                pathname === '/dashboard' ? 'default' : 'ghost'
+                                            }
+                                            className="w-full justify-start gap-2"
+                                        >
+                                            <Home className="h-4 w-4" />
+                                            Dashboard
+                                        </Button>
+                                    </Link>
+                                    <Link href="/my-bookmarks" onClick={() => setOpen(false)}>
+                                        <Button
+                                            variant={
+                                                pathname === '/my-bookmarks' ? 'default' : 'ghost'
+                                            }
+                                            className="w-full justify-start gap-2"
+                                        >
+                                            <Bookmark className="h-4 w-4" />
+                                            My Bookmarks
+                                        </Button>
+                                    </Link>
+                                    <Link href="/private" onClick={() => setOpen(false)}>
+                                        <Button
+                                            variant={
+                                                pathname === '/private' ? 'default' : 'ghost'
+                                            }
+                                            className="w-full justify-start gap-2"
+                                        >
+                                            <Lock className="h-4 w-4" />
+                                            Private Bookmarks
+                                        </Button>
+                                    </Link>
+                                </div>
+
+                                <div className="flex-1"></div>
+
+                                {/* Account Section */}
+                                <div className="flex flex-col space-y-4 pt-4 border-t pb-4 p-2">
+                                    <div className="flex items-center space-x-3 pb-4 border-b">
                                         <Avatar className="h-12 w-12">
                                             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                                {userEmail ? getInitials(userEmail) : "U"}
+                                                {userEmail ? getInitials(userEmail) : 'U'}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <p className="text-sm font-medium truncate">{userEmail}</p>
-                                            <p className="text-xs text-muted-foreground">Your account</p>
+                                            <p className="text-sm font-medium truncate">
+                                                {userEmail}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Your account
+                                            </p>
                                         </div>
                                     </div>
-                                    <form action={signOutAction} className="px-2">
-                                        <Button type="submit" variant="outline" className="w-full" onClick={() => setOpen(false)}>
+                                    <form action={signOutAction}>
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={() => setOpen(false)}
+                                        >
                                             <LogOut className="mr-2 h-4 w-4" />
                                             Log out
                                         </Button>

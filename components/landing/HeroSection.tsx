@@ -32,9 +32,10 @@ export function HeroSection() {
                 <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
+            {/* TODO: Uncomment when separate sign in page is ready */}
+            {/* <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
               <Link href="/login">Sign In</Link>
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>

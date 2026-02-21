@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export function CTASection() {
   return (
-    <section className="py-12 sm:py-16 lg:py-20">
+    <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 border-t border-b">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">
           Ready to organize your web?
