@@ -1,17 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Bookmark, Menu, X, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet";
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Bookmark, Menu, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 export function LandingNavbar() {
     const [open, setOpen] = useState(false);
@@ -41,12 +35,12 @@ export function LandingNavbar() {
                         <Button variant="ghost" asChild>
                             <Link href="#faq">FAQ</Link>
                         </Button>
-                        
+
                         {/* Theme Toggle */}
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         >
                             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -67,7 +61,7 @@ export function LandingNavbar() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         >
                             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -80,32 +74,59 @@ export function LandingNavbar() {
                                     <Menu className="h-6 w-6" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                                <SheetHeader>
+                            <SheetContent
+                                side="right"
+                                className="w-[300px] sm:w-[400px] flex flex-col"
+                            >
+                                <SheetHeader className="border-b pb-4">
                                     <SheetTitle className="flex items-center space-x-2">
                                         <Bookmark className="h-6 w-6 text-primary" />
-                                        <span>Menu</span>
+                                        <span>Smart Bookmarks</span>
                                     </SheetTitle>
                                 </SheetHeader>
                                 <div className="flex flex-col space-y-4 mt-8 p-2">
-                                    <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
+                                    <Button
+                                        variant="ghost"
+                                        asChild
+                                        className="w-full justify-start"
+                                        onClick={() => setOpen(false)}
+                                    >
                                         <Link href="#home">Home</Link>
                                     </Button>
-                                    <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
+                                    <Button
+                                        variant="ghost"
+                                        asChild
+                                        className="w-full justify-start"
+                                        onClick={() => setOpen(false)}
+                                    >
                                         <Link href="#features">Features</Link>
                                     </Button>
-                                    <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
+                                    <Button
+                                        variant="ghost"
+                                        asChild
+                                        className="w-full justify-start"
+                                        onClick={() => setOpen(false)}
+                                    >
                                         <Link href="#faq">FAQ</Link>
                                     </Button>
-                                    
-                                    <div className="pt-4 border-t">
-                                        <Button variant="outline" asChild className="w-full" onClick={() => setOpen(false)}>
-                                            <Link href="/login">Log in</Link>
-                                        </Button>
-                                        <Button asChild className="w-full mt-3" onClick={() => setOpen(false)}>
-                                            <Link href="/login">Get Started</Link>
-                                        </Button>
-                                    </div>
+                                </div>
+                                <div className="flex-1"></div>
+                                <div className="pt-4 border-t pb-4 p-2">
+                                    <Button
+                                        variant="outline"
+                                        asChild
+                                        className="w-full"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        <Link href="/login">Log in</Link>
+                                    </Button>
+                                    <Button
+                                        asChild
+                                        className="w-full mt-3"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        <Link href="/login">Get Started</Link>
+                                    </Button>
                                 </div>
                             </SheetContent>
                         </Sheet>
