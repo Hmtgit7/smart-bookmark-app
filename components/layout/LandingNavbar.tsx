@@ -38,6 +38,9 @@ export function LandingNavbar() {
                         <Button variant="ghost" asChild>
                             <Link href="#features">Features</Link>
                         </Button>
+                        <Button variant="ghost" asChild>
+                            <Link href="#faq">FAQ</Link>
+                        </Button>
                         
                         {/* Theme Toggle */}
                         <Button
@@ -90,6 +93,9 @@ export function LandingNavbar() {
                                     </Button>
                                     <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
                                         <Link href="#features">Features</Link>
+                                    </Button>
+                                    <Button variant="ghost" asChild className="w-full justify-start" onClick={() => setOpen(false)}>
+                                        <Link href="#faq">FAQ</Link>
                                     </Button>
                                     
                                     <div className="pt-4 border-t">
