@@ -130,94 +130,40 @@
 //   );
 // }
 
-import { Suspense } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bookmark, ArrowLeft, Loader2 } from "lucide-react";
-import { signInWithGoogleAction } from "@/app/actions/auth";
-import { GoogleIcon } from "@/components/icons/GoogleIcon";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+'use client';
 
-async function AuthCheck() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect("/dashboard");
-  }
-
-  return null;
-}
+import { Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
+import { AuthNavbar, BackgroundBlobs, LoginHeroSection, LoginCard } from '@/components/auth';
 
 function LoginForm() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Back to Home */}
-        <Button variant="ghost" asChild className="mb-4 sm:mb-6">
-          <Link href="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Link>
-        </Button>
+    return (
+        <>
+            <AuthNavbar />
+            <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-purple-500/10 flex items-center justify-center p-4 pt-20 sm:pt-24 relative overflow-hidden">
+                <BackgroundBlobs />
 
-        {/* Logo */}
-        <div className="flex items-center justify-center space-x-2 mb-6 sm:mb-8">
-          <Bookmark className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
-          <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Smart Bookmarks
-          </span>
-        </div>
-
-        <Card className="border-2">
-          <CardHeader className="space-y-1 p-6 sm:p-8">
-            <CardTitle className="text-2xl sm:text-3xl font-bold text-center">Welcome back</CardTitle>
-            <CardDescription className="text-center text-sm sm:text-base">
-              Sign in with your Google account to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 sm:p-8 pt-0">
-            {/* Google OAuth Button */}
-            <form action={signInWithGoogleAction}>
-              <Button
-                type="submit"
-                className="w-full h-12 sm:h-14 text-base"
-                size="lg"
-              >
-                <GoogleIcon className="mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                Continue with Google
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <p className="text-center text-xs sm:text-sm text-muted-foreground mt-6">
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </p>
-      </div>
-    </div>
-  );
+                <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
+                    <LoginHeroSection />
+                    <LoginCard />
+                </div>
+            </div>
+        </>
+    );
 }
 
 function LoginLoading() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
 }
 
 export default function LoginPage() {
-  return (
-    <>
-      <Suspense fallback={null}>
-        <AuthCheck />
-      </Suspense>
-      <Suspense fallback={<LoginLoading />}>
-        <LoginForm />
-      </Suspense>
-    </>
-  );
+    return (
+        <Suspense fallback={<LoginLoading />}>
+            <LoginForm />
+        </Suspense>
+    );
 }
