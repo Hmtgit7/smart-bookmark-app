@@ -50,9 +50,10 @@ export function LandingNavbar() {
                         <Button variant="ghost" asChild>
                             <Link href="/login">Log in</Link>
                         </Button>
-                        <Button asChild>
-                            <Link href="/login">Get Started</Link>
-                        </Button>
+                        {/* TODO: Uncomment when signup feature is ready */}
+                        {/* <Button asChild>
+                            <Link href="/sign-up">Get Started</Link>
+                        </Button> */}
                     </div>
 
                     {/* Mobile Navigation */}
@@ -120,13 +121,14 @@ export function LandingNavbar() {
                                     >
                                         <Link href="/login">Log in</Link>
                                     </Button>
-                                    <Button
+                                    {/* TODO: Uncomment when signup feature is ready */}
+                                    {/* <Button
                                         asChild
                                         className="w-full mt-3"
                                         onClick={() => setOpen(false)}
                                     >
-                                        <Link href="/login">Get Started</Link>
-                                    </Button>
+                                        <Link href="/sign-up">Get Started</Link>
+                                    </Button> */}
                                 </div>
                             </SheetContent>
                         </Sheet>
