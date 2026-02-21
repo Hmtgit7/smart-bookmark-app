@@ -331,7 +331,7 @@ export function BookmarkListItem({
                         variant="ghost"
                         size="icon"
                         onClick={handlePrivateToggle}
-                        disabled={isTogglingPrivate}
+                        disabled={isTogglingPrivate || isDeleting || isArchiving || isPinning}
                         title={isPrivate ? 'Make Public' : 'Make Private'}
                     >
                         {isTogglingPrivate ? (

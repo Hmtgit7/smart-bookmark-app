@@ -202,6 +202,10 @@ export async function togglePrivateBookmarkAction(bookmarkId: string, password: 
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    if (!password || password.length < 4) {
+        return { success: false, error: 'Password must be at least 4 characters' };
+    }
+
     // Get current bookmark
     const { data: bookmark, error: fetchError } = await supabase
         .from('bookmarks')

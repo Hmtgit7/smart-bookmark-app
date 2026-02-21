@@ -280,7 +280,9 @@ export function BookmarkCard({
                                 size="icon"
                                 className="opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={handlePrivateToggle}
-                                disabled={isTogglingPrivate}
+                                disabled={
+                                    isTogglingPrivate || isDeleting || isArchiving || isPinning
+                                }
                                 title={isPrivate ? 'Make Public' : 'Make Private'}
                             >
                                 {isTogglingPrivate ? (
@@ -364,8 +366,13 @@ export function BookmarkCard({
                     {tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-1">
                             {tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-xs px-2 py-0 gap-1">
-                                    <Tag className="h-3 w-3" />{tag}
+                                <Badge
+                                    key={tag}
+                                    variant="outline"
+                                    className="text-xs px-2 py-0 gap-1"
+                                >
+                                    <Tag className="h-3 w-3" />
+                                    {tag}
                                 </Badge>
                             ))}
                         </div>
@@ -407,20 +414,26 @@ export function BookmarkCard({
                 open={showPasswordDialog}
                 onOpenChange={setShowPasswordDialog}
                 mode={passwordMode}
-                title={isPrivate ? 'Make Bookmark Public' : passwordMode === 'set' ? 'Set Password for Private Bookmarks' : 'Make Bookmark Private'}
+                title={
+                    isPrivate
+                        ? 'Make Bookmark Public'
+                        : passwordMode === 'set'
+                          ? 'Set Password for Private Bookmarks'
+                          : 'Make Bookmark Private'
+                }
                 description={
                     isPrivate
                         ? 'Enter your password to make this bookmark public.'
                         : passwordMode === 'set'
-                        ? 'Set a password to protect your private bookmarks. You\'ll use this same password for all private bookmarks.'
-                        : 'Enter the password you set for your private bookmarks.'
+                          ? "Set a password to protect your private bookmarks. You'll use this same password for all private bookmarks."
+                          : 'Enter the password you set for your private bookmarks.'
                 }
                 buttonText={
-                    isPrivate 
-                        ? 'Make Public' 
-                        : passwordMode === 'set' 
-                        ? 'Set Password & Make Private' 
-                        : 'Make Private'
+                    isPrivate
+                        ? 'Make Public'
+                        : passwordMode === 'set'
+                          ? 'Set Password & Make Private'
+                          : 'Make Private'
                 }
                 onConfirm={handlePrivatePasswordConfirm}
             />
