@@ -53,14 +53,20 @@ export function AddBookmarkDialog() {
     const [tags, setTags] = useState<string[]>([]);
     const [category, setCategory] = useState('Uncategorized');
     const [customCategory, setCustomCategory] = useState('');
-    const [isDuplicate, setIsDuplicate] = useState(false);
+    const [isDuplicateTitle, setIsDuplicateTitle] = useState(false);
+    const [isDuplicateUrl, setIsDuplicateUrl] = useState(false);
 
     const addBookmark = useBookmarkStore((s) => s.addBookmark);
     const checkDuplicateTitle = useBookmarkStore((s) => s.checkDuplicateTitle);
+    const checkDuplicateUrl = useBookmarkStore((s) => s.checkDuplicateUrl);
 
     useEffect(() => {
-        setIsDuplicate(title.trim() ? checkDuplicateTitle(title) : false);
+        setIsDuplicateTitle(title.trim() ? checkDuplicateTitle(title) : false);
     }, [title, checkDuplicateTitle]);
+
+    useEffect(() => {
+        setIsDuplicateUrl(url.trim() ? checkDuplicateUrl(url) : false);
+    }, [url, checkDuplicateUrl]);
 
     function handleReset() {
         setTitle('');
@@ -69,7 +75,8 @@ export function AddBookmarkDialog() {
         setTags([]);
         setCategory('Uncategorized');
         setCustomCategory('');
-        setIsDuplicate(false);
+        setIsDuplicateTitle(false);
+        setIsDuplicateUrl(false);
     }
 
     function handleAISuggest() {
@@ -94,7 +101,7 @@ export function AddBookmarkDialog() {
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (isPending || isDuplicate) return;
+        if (isPending || isDuplicateTitle || isDuplicateUrl) return;
 
         const formData = new FormData(e.currentTarget);
         formData.set('category', category === 'Custom' ? customCategory : category);
@@ -147,9 +154,9 @@ export function AddBookmarkDialog() {
                                 placeholder="My Favorite Website"
                                 required
                                 disabled={isPending}
-                                className={isDuplicate ? 'border-destructive' : ''}
+                                className={isDuplicateTitle ? 'border-destructive' : ''}
                             />
-                            {isDuplicate && (
+                            {isDuplicateTitle && (
                                 <Alert variant="destructive" className="py-2">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription className="text-xs">
@@ -187,7 +194,16 @@ export function AddBookmarkDialog() {
                                 placeholder="https://example.com"
                                 required
                                 disabled={isPending}
+                                className={isDuplicateUrl ? 'border-destructive' : ''}
                             />
+                            {isDuplicateUrl && (
+                                <Alert variant="destructive" className="py-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="text-xs">
+                                        A bookmark with this URL already exists
+                                    </AlertDescription>
+                                </Alert>
+                            )}
                         </div>
 
                         <div className="grid gap-2">
@@ -256,7 +272,7 @@ export function AddBookmarkDialog() {
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isPending || isDuplicate}>
+                        <Button type="submit" disabled={isPending || isDuplicateTitle || isDuplicateUrl}>
                             {isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

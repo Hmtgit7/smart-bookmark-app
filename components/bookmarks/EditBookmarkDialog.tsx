@@ -73,16 +73,24 @@ export function EditBookmarkDialog({
     const [customCategory, setCustomCategory] = useState(
         PREDEFINED_CATEGORIES.includes(initialCategory) ? '' : initialCategory
     );
-    const [isDuplicate, setIsDuplicate] = useState(false);
+    const [isDuplicateTitle, setIsDuplicateTitle] = useState(false);
+    const [isDuplicateUrl, setIsDuplicateUrl] = useState(false);
 
     const updateBookmark = useBookmarkStore((s) => s.updateBookmark);
     const checkDuplicateTitle = useBookmarkStore((s) => s.checkDuplicateTitle);
+    const checkDuplicateUrl = useBookmarkStore((s) => s.checkDuplicateUrl);
 
     useEffect(() => {
-        setIsDuplicate(
+        setIsDuplicateTitle(
             title.trim() && title !== initialTitle ? checkDuplicateTitle(title, bookmarkId) : false
         );
     }, [title, initialTitle, bookmarkId, checkDuplicateTitle]);
+
+    useEffect(() => {
+        setIsDuplicateUrl(
+            url.trim() && url !== initialUrl ? checkDuplicateUrl(url, bookmarkId) : false
+        );
+    }, [url, initialUrl, bookmarkId, checkDuplicateUrl]);
 
     function handleAISuggest() {
         startAiTransition(async () => {
@@ -101,7 +109,7 @@ export function EditBookmarkDialog({
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        if (isPending || isDuplicate) return;
+        if (isPending || isDuplicateTitle || isDuplicateUrl) return;
 
         const formData = new FormData(e.currentTarget);
         formData.set('category', category === 'Custom' ? customCategory : category);
@@ -139,7 +147,8 @@ export function EditBookmarkDialog({
                         setCustomCategory(
                             PREDEFINED_CATEGORIES.includes(initialCategory) ? '' : initialCategory
                         );
-                        setIsDuplicate(false);
+                        setIsDuplicateTitle(false);
+                        setIsDuplicateUrl(false);
                     }
                 }
             }}
@@ -175,9 +184,9 @@ export function EditBookmarkDialog({
                                 placeholder="My Favorite Website"
                                 required
                                 disabled={isPending}
-                                className={isDuplicate ? 'border-destructive' : ''}
+                                className={isDuplicateTitle ? 'border-destructive' : ''}
                             />
-                            {isDuplicate && (
+                            {isDuplicateTitle && (
                                 <Alert variant="destructive" className="py-2">
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription className="text-xs">
@@ -215,7 +224,16 @@ export function EditBookmarkDialog({
                                 placeholder="https://example.com"
                                 required
                                 disabled={isPending}
+                                className={isDuplicateUrl ? 'border-destructive' : ''}
                             />
+                            {isDuplicateUrl && (
+                                <Alert variant="destructive" className="py-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="text-xs">
+                                        A bookmark with this URL already exists
+                                    </AlertDescription>
+                                </Alert>
+                            )}
                         </div>
 
                         <div className="grid gap-2">
@@ -281,7 +299,7 @@ export function EditBookmarkDialog({
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isPending || isDuplicate}>
+                        <Button type="submit" disabled={isPending || isDuplicateTitle || isDuplicateUrl}>
                             {isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

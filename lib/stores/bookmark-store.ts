@@ -46,6 +46,7 @@ interface BookmarkStore {
     getAllTags: () => string[];
     getTotalPages: () => number;
     checkDuplicateTitle: (title: string, excludeId?: string) => boolean;
+    checkDuplicateUrl: (url: string, excludeId?: string) => boolean;
 }
 
 function applyFilters(
@@ -224,6 +225,14 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         return bookmarks.some(
             (b) =>
                 b.title.toLowerCase() === title.toLowerCase() && b.id !== excludeId && !b.archived
+        );
+    },
+
+    checkDuplicateUrl: (url, excludeId) => {
+        const { bookmarks } = get();
+        return bookmarks.some(
+            (b) =>
+                b.url.toLowerCase() === url.toLowerCase() && b.id !== excludeId && !b.archived
         );
     },
 }));
