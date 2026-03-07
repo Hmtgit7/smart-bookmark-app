@@ -337,3 +337,73 @@ export async function verifyPrivateAccessAction(password: string) {
 
     return { success: true, message: 'Password verified!', verified: true };
 }
+// Add to app/actions/bookmarks.ts
+
+/**
+ * Checks if the current authenticated user has a private password set.
+ * Used to show correct UI (set vs reset) in the dialog.
+ */
+export async function hasPrivatePasswordAction(): Promise<{ hasPassword: boolean }> {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { hasPassword: false };
+
+    const { data } = await supabase
+        .from('users')
+        .select('private_password_hash')
+        .eq('id', user.id)
+        .single();
+
+    return { hasPassword: !!data?.private_password_hash };
+}
+
+/**
+ * Resets the private vault password.
+ * SECURITY: Requires valid Supabase session — identity is already proven.
+ * No email OTP needed because user is authenticated.
+ */
+export async function resetPrivatePasswordAction(
+    newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        // Validate inputs
+        if (!newPassword || newPassword.length < 4) {
+            return { success: false, error: 'Password must be at least 4 characters.' };
+        }
+        if (newPassword.length > 128) {
+            return { success: false, error: 'Password too long.' };
+        }
+
+        const supabase = await createClient();
+
+        // CRITICAL: Verify Supabase session — this IS the identity proof
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+            return { success: false, error: 'You must be logged in to reset your vault password.' };
+        }
+
+        // Hash the new password with bcrypt (cost factor 12)
+        const bcrypt = await import('bcryptjs');
+        const newHash = await bcrypt.hash(newPassword, 12);
+
+        // Update in DB
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({ private_password_hash: newHash })
+            .eq('id', user.id);
+
+        if (updateError) {
+            console.error('[resetPrivatePassword] DB error:', updateError);
+            return { success: false, error: 'Failed to update password. Please try again.' };
+        }
+
+        return { success: true };
+    } catch (err) {
+        console.error('[resetPrivatePassword] Unexpected error:', err);
+        return { success: false, error: 'An unexpected error occurred.' };
+    }
+}
