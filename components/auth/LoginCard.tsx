@@ -47,7 +47,9 @@ export function LoginCard() {
             <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground">
                     New to Smart Bookmarks?{' '}
-                    <span className="text-foreground font-medium">Just sign in to get started!</span>
+                    <span className="text-foreground font-medium">
+                        Just sign in to get started!
+                    </span>
                 </p>
             </div>
         </div>

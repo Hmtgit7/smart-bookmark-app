@@ -67,13 +67,18 @@ export function QuickActions() {
                     >
                         <div
                             className={cn(
-                                'flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm transition-transform duration-200 group-hover:scale-110',
+                                'flex h-10 w-10 items-center justify-center rounded-xl bg-background shadow-sm transition-transform duration-200 group-hover:scale-110'
                             )}
                         >
                             <action.icon className={cn('h-5 w-5', action.colorClass)} />
                         </div>
                         <div>
-                            <p className={cn('text-xs font-semibold leading-tight', action.colorClass)}>
+                            <p
+                                className={cn(
+                                    'text-xs font-semibold leading-tight',
+                                    action.colorClass
+                                )}
+                            >
                                 {action.label}
                             </p>
                             <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight hidden sm:block">

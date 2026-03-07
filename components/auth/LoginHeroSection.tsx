@@ -7,10 +7,10 @@ export function LoginHeroSection() {
         <div className="hidden lg:block space-y-8">
             <div className="space-y-6">
                 {/* Back button */}
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    asChild 
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    asChild
                     className="-ml-3 text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <Link href="/" className="inline-flex items-center">

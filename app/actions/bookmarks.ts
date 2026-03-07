@@ -223,7 +223,10 @@ export async function togglePrivateBookmarkAction(bookmarkId: string, password: 
     if (isCurrentlyPrivate) {
         // Making it public - verify password
         const hashedPassword = hashPassword(password);
-        if (!bookmark.private_password_hash || !timingSafeCompare(hashedPassword, bookmark.private_password_hash)) {
+        if (
+            !bookmark.private_password_hash ||
+            !timingSafeCompare(hashedPassword, bookmark.private_password_hash)
+        ) {
             return { success: false, error: 'Incorrect password' };
         }
 
@@ -255,7 +258,10 @@ export async function togglePrivateBookmarkAction(bookmarkId: string, password: 
         if (existingPrivate && existingPrivate.length > 0) {
             const existingHash = existingPrivate[0].private_password_hash;
             if (!existingHash || !timingSafeCompare(hashedPassword, existingHash)) {
-                return { success: false, error: 'Incorrect password. Use the same password as your other private bookmarks.' };
+                return {
+                    success: false,
+                    error: 'Incorrect password. Use the same password as your other private bookmarks.',
+                };
             }
         }
 
@@ -316,7 +322,10 @@ export async function verifyPrivateAccessAction(password: string) {
 
     const storedHash = bookmarks[0].private_password_hash;
     if (!storedHash) {
-        return { error: 'Private bookmark password not set. Please reset your private bookmark password.', verified: false };
+        return {
+            error: 'Private bookmark password not set. Please reset your private bookmark password.',
+            verified: false,
+        };
     }
 
     const hashedPassword = hashPassword(password);

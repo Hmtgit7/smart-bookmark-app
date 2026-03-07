@@ -30,7 +30,12 @@ export function StatsCard({
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
                         {title}
                     </p>
-                    <p className={cn('mt-1.5 text-3xl font-bold tabular-nums', colorClass.split(' ').slice(1).join(' '))}>
+                    <p
+                        className={cn(
+                            'mt-1.5 text-3xl font-bold tabular-nums',
+                            colorClass.split(' ').slice(1).join(' ')
+                        )}
+                    >
                         {value.toLocaleString()}
                     </p>
                     {description && (
@@ -53,7 +58,12 @@ export function StatsCard({
                         </div>
                     )}
                 </div>
-                <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', iconBgClass)}>
+                <div
+                    className={cn(
+                        'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+                        iconBgClass
+                    )}
+                >
                     <Icon className={cn('h-5 w-5', colorClass.split(' ').slice(1).join(' '))} />
                 </div>
             </div>

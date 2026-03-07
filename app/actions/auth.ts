@@ -1,4 +1,4 @@
-"use server";
+'use server';
 
 // import { createClient } from "@/lib/supabase/server";
 // import { redirect } from "next/navigation";
@@ -74,29 +74,29 @@
 //     redirect("/");
 // }
 
-"use server";
+'use server';
 
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
 export async function signInWithGoogleAction() {
     const supabase = await createClient();
 
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
     const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider: 'google',
         options: {
             redirectTo: `${origin}/auth/callback`,
             queryParams: {
-                access_type: "offline",
-                prompt: "select_account",
+                access_type: 'offline',
+                prompt: 'select_account',
             },
         },
     });
 
     if (error) {
-        redirect("/login?error=Could not authenticate with Google");
+        redirect('/login?error=Could not authenticate with Google');
     }
 
     if (data.url) {
@@ -107,5 +107,5 @@ export async function signInWithGoogleAction() {
 export async function signOutAction() {
     const supabase = await createClient();
     await supabase.auth.signOut();
-    redirect("/");
+    redirect('/');
 }

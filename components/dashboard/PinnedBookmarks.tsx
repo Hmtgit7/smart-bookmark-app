@@ -81,7 +81,10 @@ export function PinnedBookmarks({ bookmarks }: PinnedBookmarksProps) {
                                         <ExternalLink className="h-3.5 w-3.5" />
                                     </a>
                                 </div>
-                                <Badge variant="secondary" className="mt-1 h-4 px-1.5 text-[10px] font-medium">
+                                <Badge
+                                    variant="secondary"
+                                    className="mt-1 h-4 px-1.5 text-[10px] font-medium"
+                                >
                                     {bm.category}
                                 </Badge>
                             </div>

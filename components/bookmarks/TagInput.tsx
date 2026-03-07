@@ -41,7 +41,8 @@ export function TagInput({ tags, onChange, disabled = false }: TagInputProps) {
         >
             {tags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-xs gap-1 pr-1">
-                    <Tag className="h-3 w-3" />{tag}
+                    <Tag className="h-3 w-3" />
+                    {tag}
                     {!disabled && (
                         <button
                             type="button"

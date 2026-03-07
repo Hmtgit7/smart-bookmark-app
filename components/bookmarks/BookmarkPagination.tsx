@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useBookmarkStore } from "@/lib/stores/bookmark-store";
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useBookmarkStore } from '@/lib/stores/bookmark-store';
 
 export function BookmarkPagination() {
     const { currentPage, setCurrentPage, getTotalPages } = useBookmarkStore();
@@ -36,7 +36,7 @@ export function BookmarkPagination() {
                     <div key={page} className="flex items-center gap-2">
                         {showDots && <span className="text-muted-foreground">...</span>}
                         <Button
-                            variant={currentPage === page ? "default" : "outline"}
+                            variant={currentPage === page ? 'default' : 'outline'}
                             size="icon"
                             onClick={() => setCurrentPage(page)}
                         >

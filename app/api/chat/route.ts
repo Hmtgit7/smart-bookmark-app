@@ -1,54 +1,59 @@
-import Groq from "groq-sdk";
-import { createClient } from "@/lib/supabase/server";
-import { NextResponse } from "next/server";
+import Groq from 'groq-sdk';
+import { createClient } from '@/lib/supabase/server';
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request) {
-  try {
-    // Check if API key exists
-    if (!process.env.GROQ_API_KEY) {
-      return NextResponse.json(
-        { error: "Groq API key is not configured. Please add GROQ_API_KEY to your .env.local file." },
-        { status: 500 }
-      );
-    }
+    try {
+        // Check if API key exists
+        if (!process.env.GROQ_API_KEY) {
+            return NextResponse.json(
+                {
+                    error: 'Groq API key is not configured. Please add GROQ_API_KEY to your .env.local file.',
+                },
+                { status: 500 }
+            );
+        }
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const { message } = await req.json();
+        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+        const { message } = await req.json();
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+        const supabase = await createClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
-    // Fetch user's bookmarks
-    const { data: bookmarks, error: fetchError } = await supabase
-      .from("bookmarks")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+        // Fetch user's bookmarks
+        const { data: bookmarks, error: fetchError } = await supabase
+            .from('bookmarks')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
 
-    if (fetchError) {
-      return NextResponse.json(
-        { error: "Failed to fetch bookmarks" },
-        { status: 500 }
-      );
-    }
+        if (fetchError) {
+            return NextResponse.json({ error: 'Failed to fetch bookmarks' }, { status: 500 });
+        }
 
-    if (!bookmarks || bookmarks.length === 0) {
-      return NextResponse.json({
-        response: "You don't have any bookmarks yet. Start adding some to use the AI assistant! 📚"
-      });
-    }
+        if (!bookmarks || bookmarks.length === 0) {
+            return NextResponse.json({
+                response:
+                    "You don't have any bookmarks yet. Start adding some to use the AI assistant! 📚",
+            });
+        }
 
-    // Create context from bookmarks
-    const bookmarksContext = bookmarks.map((b, i) =>
-      `${i + 1}. "${b.title}" - ${b.url} (Category: ${b.category}, Added: ${new Date(b.created_at).toLocaleDateString()})`
-    ).join("\n");
+        // Create context from bookmarks
+        const bookmarksContext = bookmarks
+            .map(
+                (b, i) =>
+                    `${i + 1}. "${b.title}" - ${b.url} (Category: ${b.category}, Added: ${new Date(b.created_at).toLocaleDateString()})`
+            )
+            .join('\n');
 
-    // Create system prompt
-    const systemPrompt = `You are a helpful AI assistant that helps users find and manage their bookmarks.
+        // Create system prompt
+        const systemPrompt = `You are a helpful AI assistant that helps users find and manage their bookmarks.
 
 Here are the user's bookmarks:
 ${bookmarksContext}
@@ -65,47 +70,50 @@ Instructions:
 
 Respond in a friendly, conversational tone.`;
 
-    // Call Groq API
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: message
+        // Call Groq API
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: 'system',
+                    content: systemPrompt,
+                },
+                {
+                    role: 'user',
+                    content: message,
+                },
+            ],
+            model: 'llama-3.3-70b-versatile', // Fast and smart
+            temperature: 0.7,
+            max_tokens: 500,
+        });
+
+        const responseText =
+            chatCompletion.choices[0]?.message?.content ||
+            "I couldn't generate a response. Please try again.";
+
+        return NextResponse.json({ response: responseText });
+    } catch (error: unknown) {
+        const e = error as { message?: string; status?: number } | null;
+        console.error('Chat API Error:', error);
+
+        // Check for specific API errors
+        if (e?.message?.includes('API key')) {
+            return NextResponse.json(
+                { error: 'Invalid Groq API key. Please check your .env.local file.' },
+                { status: 500 }
+            );
         }
-      ],
-      model: "llama-3.3-70b-versatile", // Fast and smart
-      temperature: 0.7,
-      max_tokens: 500,
-    });
 
-    const responseText = chatCompletion.choices[0]?.message?.content || "I couldn't generate a response. Please try again.";
+        if (e?.status === 429) {
+            return NextResponse.json(
+                { error: 'Rate limit reached. Please wait a moment and try again.' },
+                { status: 429 }
+            );
+        }
 
-    return NextResponse.json({ response: responseText });
-  } catch (error: any) {
-    console.error("Chat API Error:", error);
-
-    // Check for specific API errors
-    if (error?.message?.includes("API key")) {
-      return NextResponse.json(
-        { error: "Invalid Groq API key. Please check your .env.local file." },
-        { status: 500 }
-      );
+        return NextResponse.json(
+            { error: e?.message || 'Failed to process your request. Please try again.' },
+            { status: 500 }
+        );
     }
-
-    if (error?.status === 429) {
-      return NextResponse.json(
-        { error: "Rate limit reached. Please wait a moment and try again." },
-        { status: 429 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: error?.message || "Failed to process your request. Please try again." },
-      { status: 500 }
-    );
-  }
 }

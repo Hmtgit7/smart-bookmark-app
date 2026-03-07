@@ -203,9 +203,7 @@ export function Navbar({ userEmail }: NavbarProps) {
                                     </Link>
                                     <Link href="/private" onClick={() => setOpen(false)}>
                                         <Button
-                                            variant={
-                                                pathname === '/private' ? 'default' : 'ghost'
-                                            }
+                                            variant={pathname === '/private' ? 'default' : 'ghost'}
                                             className="w-full justify-start gap-2"
                                         >
                                             <Lock className="h-4 w-4" />

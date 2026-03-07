@@ -1,14 +1,6 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import {
-    Bookmark,
-    Globe,
-    Lock,
-    Pin,
-    Archive,
-    TrendingUp,
-    Loader2,
-} from 'lucide-react';
+import { Bookmark, Globe, Lock, Pin, Archive, TrendingUp, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Navbar } from '@/components/layout/Navbar';
 import { ChatBot } from '@/components/chat/ChatBot';

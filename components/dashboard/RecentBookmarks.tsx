@@ -58,7 +58,9 @@ export function RecentBookmarks({ bookmarks }: RecentBookmarksProps) {
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <Clock className="h-8 w-8 mb-2 opacity-30" />
                     <p className="text-sm">No bookmarks yet</p>
-                    <p className="text-xs mt-1 opacity-60">Add your first bookmark to get started</p>
+                    <p className="text-xs mt-1 opacity-60">
+                        Add your first bookmark to get started
+                    </p>
                 </div>
             ) : (
                 <ul className="divide-y">
@@ -78,7 +80,8 @@ export function RecentBookmarks({ bookmarks }: RecentBookmarksProps) {
                                             alt=""
                                             className="h-4 w-4 object-contain"
                                             onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
+                                                (e.target as HTMLImageElement).style.display =
+                                                    'none';
                                             }}
                                         />
                                     ) : (
