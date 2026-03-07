@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -199,10 +200,13 @@ export function BookmarkCard({
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                         {getFavicon(url) ? (
-                            <img
+                            <Image
                                 src={getFavicon(url) || ''}
                                 alt=""
-                                className="w-8 h-8 rounded"
+                                width={32}
+                                height={32}
+                                className="w-8 h-8 rounded object-contain"
+                                unoptimized
                                 onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                 }}

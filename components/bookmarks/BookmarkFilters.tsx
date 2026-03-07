@@ -126,7 +126,12 @@ export function BookmarkFilters() {
                     </Select>
                 )}
 
-                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <Select
+                    value={sortBy}
+                    onValueChange={(value: 'newest' | 'oldest' | 'alphabetical') =>
+                        setSortBy(value)
+                    }
+                >
                     <SelectTrigger className="w-full sm:w-[180px]">
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
