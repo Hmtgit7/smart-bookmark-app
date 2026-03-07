@@ -151,18 +151,23 @@ export function PrivatePasswordDialog({
                     {mode === 'set' && (
                         <Alert>
                             <AlertDescription className="text-xs">
-                                <strong>Important:</strong> Remember this password! You&apos;ll need it to
-                                access your private bookmarks.
+                                <strong>Important:</strong> Remember this password! You&apos;ll need
+                                it to access your private bookmarks.
                             </AlertDescription>
                         </Alert>
                     )}
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleClose}
+                            disabled={isLoading}
+                        >
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading ? 'Please wait...' : (buttonText || defaultButtonText)}
+                            {isLoading ? 'Please wait...' : buttonText || defaultButtonText}
                         </Button>
                     </DialogFooter>
                 </form>

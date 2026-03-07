@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -203,10 +204,13 @@ export function BookmarkListItem({
             {/* Favicon */}
             <div className="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                 {getFavicon(url) ? (
-                    <img
+                    <Image
                         src={getFavicon(url) || ''}
                         alt=""
-                        className="w-6 h-6 rounded"
+                        width={24}
+                        height={24}
+                        className="w-6 h-6 rounded object-contain"
+                        unoptimized
                         onError={(e) => {
                             e.currentTarget.style.display = 'none';
                         }}
@@ -260,7 +264,8 @@ export function BookmarkListItem({
                     <div className="flex flex-wrap gap-1 mb-1">
                         {tags.map((tag) => (
                             <Badge key={tag} variant="outline" className="text-xs px-2 py-0 gap-1">
-                                <Tag className="h-3 w-3" />{tag}
+                                <Tag className="h-3 w-3" />
+                                {tag}
                             </Badge>
                         ))}
                     </div>
@@ -395,20 +400,26 @@ export function BookmarkListItem({
                 open={showPasswordDialog}
                 onOpenChange={setShowPasswordDialog}
                 mode={passwordMode}
-                title={isPrivate ? 'Make Bookmark Public' : passwordMode === 'set' ? 'Set Password for Private Bookmarks' : 'Make Bookmark Private'}
+                title={
+                    isPrivate
+                        ? 'Make Bookmark Public'
+                        : passwordMode === 'set'
+                          ? 'Set Password for Private Bookmarks'
+                          : 'Make Bookmark Private'
+                }
                 description={
                     isPrivate
                         ? 'Enter your password to make this bookmark public.'
                         : passwordMode === 'set'
-                        ? 'Set a password to protect your private bookmarks. You\'ll use this same password for all private bookmarks.'
-                        : 'Enter the password you set for your private bookmarks.'
+                          ? "Set a password to protect your private bookmarks. You'll use this same password for all private bookmarks."
+                          : 'Enter the password you set for your private bookmarks.'
                 }
                 buttonText={
-                    isPrivate 
-                        ? 'Make Public' 
-                        : passwordMode === 'set' 
-                        ? 'Set Password & Make Private' 
-                        : 'Make Private'
+                    isPrivate
+                        ? 'Make Public'
+                        : passwordMode === 'set'
+                          ? 'Set Password & Make Private'
+                          : 'Make Private'
                 }
                 onConfirm={handlePrivatePasswordConfirm}
             />

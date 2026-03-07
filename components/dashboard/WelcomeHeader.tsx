@@ -15,7 +15,10 @@ function getGreeting() {
 }
 
 function getUsername(email: string) {
-    return email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    return email
+        .split('@')[0]
+        .replace(/[._-]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function WelcomeHeader({ email, totalBookmarks, addedThisWeek }: WelcomeHeaderProps) {

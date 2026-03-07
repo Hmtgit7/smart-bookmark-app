@@ -70,7 +70,10 @@ export function CategoryBreakdown({ categories, total }: CategoryBreakdownProps)
                             </div>
                             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                                 <div
-                                    className={cn('h-full rounded-full transition-all duration-700', colorClass)}
+                                    className={cn(
+                                        'h-full rounded-full transition-all duration-700',
+                                        colorClass
+                                    )}
                                     style={{ width: `${pct}%` }}
                                 />
                             </div>

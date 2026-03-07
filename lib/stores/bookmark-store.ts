@@ -186,8 +186,15 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     },
 
     getAllFilteredBookmarks: () => {
-        const { bookmarks, showArchived, searchQuery, selectedCategory, selectedTag, sortBy, showPrivateOnly } =
-            get();
+        const {
+            bookmarks,
+            showArchived,
+            searchQuery,
+            selectedCategory,
+            selectedTag,
+            sortBy,
+            showPrivateOnly,
+        } = get();
         return applyFilters(
             bookmarks,
             showArchived,
@@ -203,7 +210,11 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         const { bookmarks, showArchived, showPrivateOnly } = get();
         const categories = new Set(
             bookmarks
-                .filter((b) => b.archived === showArchived && (showPrivateOnly ? b.is_private : !b.is_private))
+                .filter(
+                    (b) =>
+                        b.archived === showArchived &&
+                        (showPrivateOnly ? b.is_private : !b.is_private)
+                )
                 .map((b) => b.category)
         );
         return ['All', ...Array.from(categories).sort()];
@@ -213,7 +224,11 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
         const { bookmarks, showArchived, showPrivateOnly } = get();
         const tags = new Set(
             bookmarks
-                .filter((b) => b.archived === showArchived && (showPrivateOnly ? b.is_private : !b.is_private))
+                .filter(
+                    (b) =>
+                        b.archived === showArchived &&
+                        (showPrivateOnly ? b.is_private : !b.is_private)
+                )
                 .flatMap((b) => b.tags)
         );
         return ['All', ...Array.from(tags).sort()];
@@ -253,8 +268,7 @@ export const useBookmarkStore = create<BookmarkStore>((set, get) => ({
     checkDuplicateUrl: (url, excludeId) => {
         const { bookmarks } = get();
         return bookmarks.some(
-            (b) =>
-                b.url.toLowerCase() === url.toLowerCase() && b.id !== excludeId && !b.archived
+            (b) => b.url.toLowerCase() === url.toLowerCase() && b.id !== excludeId && !b.archived
         );
     },
 }));

@@ -8,6 +8,7 @@ import { BookmarkPagination } from './BookmarkPagination';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, BookmarkX } from 'lucide-react';
 import { useBookmarkStore } from '@/lib/stores/bookmark-store';
+import type { Bookmark } from '@/lib/stores/bookmark-store';
 import { bookmarkSyncChannel } from '@/lib/stores/bookmark-sync';
 
 interface BookmarkListProps {
@@ -64,10 +65,10 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                 (payload) => {
                     switch (payload.eventType) {
                         case 'INSERT':
-                            addBookmark(payload.new as any);
+                            addBookmark(payload.new as Bookmark);
                             break;
                         case 'UPDATE':
-                            updateBookmark(payload.new.id, payload.new as any);
+                            updateBookmark(payload.new.id, payload.new as Bookmark);
                             break;
                         case 'DELETE':
                             deleteBookmark(payload.old.id);

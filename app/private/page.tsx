@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';
@@ -8,19 +8,47 @@ import { PrivatePasswordDialog } from '@/components/bookmarks/PrivatePasswordDia
 import { useBookmarkStore } from '@/lib/stores/bookmark-store';
 import { verifyPrivateAccessAction } from '@/app/actions/bookmarks';
 import { toast } from 'sonner';
-import { Lock, Loader2 } from 'lucide-react';
+import { Lock, Loader2, ShieldAlert } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function PrivatePage() {
     const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+
+    // ✅ FIX: Separate auth loading (one-time) from vault lock state
+    // isAuthLoading: only true on FIRST mount while we fetch user from Supabase
+    // Never goes back to true — tab switches don't trigger this
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
     const [showPasswordDialog, setShowPasswordDialog] = useState(false);
     const [isUnlockedThisSession, setIsUnlockedThisSession] = useState(false);
-    const isVerifiedRef = useRef(false); // Track verification synchronously
-    const { setShowPrivateOnly } = useBookmarkStore();
+
+    // Ref tracks unlock state synchronously — avoids stale closures in event listeners
+    const isVerifiedRef = useRef(false);
+    // Ref to track if we already have the user — avoids re-running auth check
+    const userLoadedRef = useRef(false);
+
+    const setShowPrivateOnly = useBookmarkStore((s) => s.setShowPrivateOnly);
     const router = useRouter();
 
+    // ─── Shared lock helper ───────────────────────────────────────────────────
+    const lockVault = useCallback(
+        (showDialog = true) => {
+            isVerifiedRef.current = false;
+            setIsUnlockedThisSession(false);
+            setShowPrivateOnly(false);
+            if (showDialog) {
+                // ✅ FIX: Always re-open dialog when locking
+                setShowPasswordDialog(true);
+            }
+        },
+        [setShowPrivateOnly]
+    );
+
+    // ─── One-time auth check on mount ────────────────────────────────────────
     useEffect(() => {
+        // ✅ FIX: Guard — don't re-run auth check if user is already loaded
+        if (userLoadedRef.current) return;
+
         const checkAuth = async () => {
             const supabase = createClient();
             const {
@@ -32,11 +60,11 @@ export default function PrivatePage() {
                 return;
             }
 
+            userLoadedRef.current = true;
             setUser(user);
-            setIsLoading(false);
+            setIsAuthLoading(false); // ✅ Only set false once — never flip back to true
 
-            // Always require password verification on each visit
-            // Check if user has any private bookmarks
+            // Check if user has any private bookmarks at all
             const { data: privateBookmarks } = await supabase
                 .from('bookmarks')
                 .select('id')
@@ -47,72 +75,109 @@ export default function PrivatePage() {
             if (privateBookmarks && privateBookmarks.length > 0) {
                 setShowPasswordDialog(true);
             } else {
-                toast.info('You don\'t have any private bookmarks yet!');
+                toast.info("You don't have any private bookmarks yet!");
             }
         };
 
-        // Reset unlock state on component mount (page visit)
-        setIsUnlockedThisSession(false);
-        isVerifiedRef.current = false; // Reset ref as well
         checkAuth();
     }, [router]);
 
+    // ─── Tab visibility auto-lock ─────────────────────────────────────────────
     useEffect(() => {
-        // Set to show private bookmarks only
-        setShowPrivateOnly(true);
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'hidden' && isVerifiedRef.current) {
+                // ✅ FIX: lockVault(false) — lock state but DON'T open dialog yet
+                // Dialog will open when user returns (visibilityState === "visible")
+                lockVault(false);
+            }
 
-        // Reset when leaving the page
+            if (
+                document.visibilityState === 'visible' &&
+                !isVerifiedRef.current &&
+                userLoadedRef.current
+            ) {
+                // ✅ FIX: User came BACK to the tab — auto-pop the dialog
+                setShowPasswordDialog(true);
+            }
+        };
+
+        const handleWindowBlur = () => {
+            // Alt+Tab / window switch — lock silently (no dialog popup on blur)
+            if (isVerifiedRef.current) {
+                lockVault(false);
+            }
+        };
+
+        const handleWindowFocus = () => {
+            // ✅ FIX: Window regained focus — if locked, show the dialog
+            if (!isVerifiedRef.current && userLoadedRef.current) {
+                setShowPasswordDialog(true);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleWindowBlur);
+        window.addEventListener('focus', handleWindowFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleWindowBlur);
+            window.removeEventListener('focus', handleWindowFocus);
+        };
+    }, [lockVault]);
+
+    // ─── Cleanup on page leave ────────────────────────────────────────────────
+    useEffect(() => {
         return () => {
             setShowPrivateOnly(false);
+            isVerifiedRef.current = false;
         };
     }, [setShowPrivateOnly]);
 
+    // ─── Password verified handler ────────────────────────────────────────────
     const handlePasswordVerification = async (password: string) => {
         const result = await verifyPrivateAccessAction(password);
 
         if (result.verified) {
-            isVerifiedRef.current = true; // Set ref immediately (synchronous)
+            isVerifiedRef.current = true;
             setIsUnlockedThisSession(true);
-            toast.success('Access granted to private bookmarks!');
-            // Dialog will close automatically after successful verification
+            setShowPrivateOnly(true); // ✅ Only set AFTER unlock — never before
+            setShowPasswordDialog(false);
+            toast.success('Private vault unlocked!');
         } else {
-            const error = result.error || 'Incorrect password';
+            const error = result.error ?? 'Incorrect password';
             toast.error(error);
-            throw new Error(error);
+            throw new Error(error); // Keeps dialog open
         }
     };
 
+    // ─── Dialog close handler ─────────────────────────────────────────────────
     const handleDialogClose = (open: boolean) => {
-        if (!open) {
-            // User is trying to close the dialog
-            // Check the ref (synchronous) instead of state
-            if (!isVerifiedRef.current) {
-                // They closed without verifying, redirect to dashboard
-                router.push('/dashboard');
-            }
+        if (!open && !isVerifiedRef.current) {
+            // Closed without unlocking → go back to dashboard
+            router.push('/dashboard');
+            return;
         }
         setShowPasswordDialog(open);
     };
 
-    if (isLoading) {
+    // ─── Render: Auth loading (one-time only, never on tab return) ────────────
+    if (isAuthLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-                <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
+            <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
 
-    if (!user) {
-        return null;
-    }
+    if (!user) return null;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
             <Navbar userEmail={user.email} />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+                {/* Header */}
                 <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
                     <div className="flex items-center gap-3">
                         <Lock className="h-8 w-8 text-primary" />
@@ -125,17 +190,48 @@ export default function PrivatePage() {
                             </p>
                         </div>
                     </div>
+
+                    {/* Manual lock button — only when unlocked */}
+                    {isUnlockedThisSession && (
+                        <button
+                            onClick={() => lockVault(true)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors border rounded-lg px-3 py-2 hover:bg-muted"
+                        >
+                            <Lock className="h-4 w-4" />
+                            Lock Vault
+                        </button>
+                    )}
                 </div>
 
+                {/* Content */}
                 {isUnlockedThisSession ? (
                     <BookmarkList userId={user.id} />
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <Lock className="h-16 w-16 text-muted-foreground mb-4" />
-                        <h2 className="text-xl font-semibold mb-2">Private Area Locked</h2>
-                        <p className="text-muted-foreground mb-6">
-                            Enter your password to access private bookmarks
+                    // ✅ FIX: Locked screen — entire area is clickable to open dialog
+                    <div
+                        className="flex flex-col items-center justify-center py-20 cursor-pointer group"
+                        onClick={() => setShowPasswordDialog(true)}
+                        role="button"
+                        aria-label="Click to unlock private vault"
+                    >
+                        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted border-2 border-dashed border-muted-foreground/30 mb-6 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all duration-200">
+                            <ShieldAlert className="h-12 w-12 text-muted-foreground group-hover:text-primary transition-colors duration-200" />
+                        </div>
+                        <h2 className="text-xl font-semibold mb-2">Private Vault Locked</h2>
+                        <p className="text-muted-foreground mb-3 text-center max-w-sm">
+                            Your private bookmarks are protected. Click anywhere here or the button
+                            below to unlock.
                         </p>
+                        <button
+                            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowPasswordDialog(true);
+                            }}
+                        >
+                            <Lock className="h-4 w-4" />
+                            Enter Password
+                        </button>
                     </div>
                 )}
             </main>
