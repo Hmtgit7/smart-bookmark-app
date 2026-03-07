@@ -15,6 +15,12 @@ interface BookmarkListProps {
     userId: string;
 }
 
+interface RealtimeBookmarkPayload {
+    eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+    new: Bookmark & { id: string };
+    old: { id: string };
+}
+
 export function BookmarkList({ userId }: BookmarkListProps) {
     const {
         isLoading,
@@ -62,7 +68,7 @@ export function BookmarkList({ userId }: BookmarkListProps) {
                     table: 'bookmarks',
                     filter: `user_id=eq.${userId}`,
                 },
-                (payload) => {
+                (payload: RealtimeBookmarkPayload) => {
                     switch (payload.eventType) {
                         case 'INSERT':
                             addBookmark(payload.new as Bookmark);
