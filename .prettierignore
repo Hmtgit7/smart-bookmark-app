@@ -2,10 +2,24 @@ node_modules
 .next
 .git
 .husky
-dist
-build
-coverage
-*.lock
+dist/
+build/
+out/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# Generated
+packages/db/src/generated/
+apps/web/lib/generated/
+
+# Lock files
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Env
+.env
+.env.*
+!.env.example
+

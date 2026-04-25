@@ -1,0 +1,53 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", ".env*"],
+            "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+            "env": [
+                "NODE_ENV",
+                "NEXT_PUBLIC_SUPABASE_URL",
+                "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+                "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+                "NEXT_PUBLIC_API_URL",
+                "DOCKER_BUILD"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "start": {
+            "dependsOn": ["build"]
+        },
+        "lint": {
+            "dependsOn": ["^build"],
+            "outputs": []
+        },
+        "typecheck": {
+            "dependsOn": ["^build"],
+            "outputs": []
+        },
+        "format": {
+            "cache": false
+        },
+        "test": {
+            "dependsOn": ["^build"],
+            "inputs": ["$TURBO_DEFAULT$", ".env.test*"],
+            "outputs": ["coverage/**"]
+        },
+        "test:watch": {
+            "cache": false,
+            "persistent": true
+        },
+        "db:generate": {
+            "cache": false,
+            "outputs": ["src/generated/**"]
+        },
+        "db:migrate": {
+            "cache": false
+        }
+    }
+}

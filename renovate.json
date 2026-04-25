@@ -1,0 +1,58 @@
+{
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "extends": [
+        "config:recommended",
+        ":dependencyDashboard",
+        ":semanticCommits",
+        ":separatePatchReleases",
+        "group:allNonMajor"
+    ],
+    "timezone": "Asia/Kolkata",
+    "schedule": ["every weekend"],
+    "labels": ["dependencies"],
+    "prConcurrentLimit": 5,
+    "prHourlyLimit": 2,
+    "automerge": false,
+    "packageRules": [
+        {
+            "matchDepTypes": ["devDependencies"],
+            "automerge": true,
+            "automergeType": "pr",
+            "matchUpdateTypes": ["minor", "patch"]
+        },
+        {
+            "matchPackageNames": ["turbo"],
+            "automerge": true,
+            "automergeType": "pr"
+        },
+        {
+            "matchPackagePatterns": ["^@types/"],
+            "automerge": true,
+            "automergeType": "pr"
+        },
+        {
+            "matchPackagePatterns": ["^@prisma/", "^prisma$"],
+            "groupName": "Prisma",
+            "automerge": false
+        },
+        {
+            "matchPackagePatterns": ["^@nestjs/"],
+            "groupName": "NestJS",
+            "automerge": false
+        },
+        {
+            "matchPackageNames": ["next"],
+            "automerge": false,
+            "labels": ["dependencies", "next.js"]
+        }
+    ],
+    "vulnerabilityAlerts": {
+        "labels": ["security"],
+        "automerge": true,
+        "automergeType": "pr"
+    },
+    "lockFileMaintenance": {
+        "enabled": true,
+        "schedule": ["before 5am on the first day of the month"]
+    }
+}

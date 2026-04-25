@@ -1,0 +1,21 @@
+# CODEOWNERS
+# These owners will be requested for review on every pull request.
+# Order matters: the last matching pattern takes precedence.
+
+# Global fallback — repo owner reviews everything
+*                   @Hmtgit7
+
+# Frontend (Next.js)
+/apps/web/          @Hmtgit7
+
+# Backend (NestJS)
+/apps/api/          @Hmtgit7
+
+# Shared packages
+/packages/          @Hmtgit7
+
+# CI/CD and infrastructure — always require owner review
+/.github/           @Hmtgit7
+/docker-compose*.yml @Hmtgit7
+/render.yaml        @Hmtgit7
+/turbo.json         @Hmtgit7
