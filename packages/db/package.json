@@ -1,25 +1,25 @@
 {
-    "name": "@smart-bookmark/db",
-    "version": "0.0.0",
-    "private": true,
-    "scripts": {
-        "generate": "prisma generate",
-        "migrate:dev": "prisma migrate dev",
-        "migrate:deploy": "prisma migrate deploy",
-        "migrate:reset": "prisma migrate reset",
-        "studio": "prisma studio",
-        "db:seed": "ts-node prisma/seed.ts",
-        "typecheck": "tsc --noEmit"
-    },
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "dependencies": {
-        "@prisma/client": "^6.5.0"
-    },
-    "devDependencies": {
-        "prisma": "^6.5.0",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.7.3"
-    }
+  "name": "@smart-bookmark/db",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:reset": "prisma migrate reset",
+    "studio": "prisma studio",
+    "db:seed": "ts-node prisma/seed.ts",
+    "typecheck": "prisma generate && tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
 }

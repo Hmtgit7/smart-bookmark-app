@@ -14,7 +14,7 @@
     "start": "turbo run start",
     "lint": "turbo run lint",
     "format": "turbo run format",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "pnpm --filter @smart-bookmark/shared typecheck && pnpm --filter @smart-bookmark/db typecheck && pnpm --filter @smart-bookmark/api typecheck && pnpm --filter @smart-bookmark/web typecheck",
     "test": "turbo run test",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
