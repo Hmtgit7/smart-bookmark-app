@@ -1,0 +1,145 @@
+import { redirect } from 'next/navigation';
+import { AlertTriangle, KeyRound, Trash2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { AuthNavbar } from '@/components/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { deleteAccountAction, updatePasswordAction } from '@/app/actions/auth';
+
+async function SettingsContent({
+    searchParams,
+}: {
+    searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+    const params = await searchParams;
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        redirect('/login');
+    }
+
+    return (
+        <>
+            <AuthNavbar />
+            <main className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 px-4 py-8 pt-24 sm:px-6 lg:px-8">
+                <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+                    <div className="space-y-2">
+                        <h1 className="text-3xl font-bold tracking-tight">Account settings</h1>
+                        <p className="text-sm text-muted-foreground">
+                            Add a password so you can sign in with email, or permanently delete your
+                            account when you are done.
+                        </p>
+                    </div>
+
+                    {params.error && (
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Something went wrong</AlertTitle>
+                            <AlertDescription>{params.error}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    {params.success && (
+                        <Alert>
+                            <AlertDescription>{params.success}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <Card className="border-2 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <KeyRound className="h-5 w-5 text-primary" />
+                                Password setup
+                            </CardTitle>
+                            <CardDescription>
+                                Create or change the password for {user.email}. You can then sign in
+                                with email and password as well as Google.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form action={updatePasswordAction} className="space-y-4">
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="password">New password</Label>
+                                        <Input
+                                            id="password"
+                                            name="password"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            minLength={8}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="confirmPassword">Confirm password</Label>
+                                        <Input
+                                            id="confirmPassword"
+                                            name="confirmPassword"
+                                            type="password"
+                                            autoComplete="new-password"
+                                            minLength={8}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <Button type="submit" className="w-full sm:w-auto">
+                                    Save password
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-2 border-destructive/30 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-destructive">
+                                <Trash2 className="h-5 w-5" />
+                                Delete account permanently
+                            </CardTitle>
+                            <CardDescription>
+                                This removes your account and all bookmarks. This cannot be undone.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form action={deleteAccountAction} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmEmail">
+                                        Type {user.email} to confirm
+                                    </Label>
+                                    <Input
+                                        id="confirmEmail"
+                                        name="confirmEmail"
+                                        type="email"
+                                        autoComplete="off"
+                                        placeholder={user.email || 'your email'}
+                                        required
+                                    />
+                                </div>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    className="w-full sm:w-auto"
+                                >
+                                    Permanently delete account
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </div>
+            </main>
+        </>
+    );
+}
+
+export default function SettingsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ error?: string; success?: string }>;
+}) {
+    return <SettingsContent searchParams={searchParams} />;
+}

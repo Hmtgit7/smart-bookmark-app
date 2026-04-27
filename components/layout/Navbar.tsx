@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Bookmark, LogOut, Moon, Sun, Menu, Lock, Home } from 'lucide-react';
+import { Bookmark, LogOut, Moon, Sun, Menu, Lock, Home, Settings } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { signOutAction } from '@/app/actions/auth';
 import {
@@ -141,6 +141,12 @@ export function Navbar({ userEmail }: NavbarProps) {
                                 </div>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
+                                    <Link href="/settings" className="flex w-full items-center">
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        <span>Settings</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
                                     <form action={signOutAction} className="w-full">
                                         <button type="submit" className="flex w-full items-center">
                                             <LogOut className="mr-2 h-4 w-4" />
@@ -208,6 +214,15 @@ export function Navbar({ userEmail }: NavbarProps) {
                                         >
                                             <Lock className="h-4 w-4" />
                                             Private Bookmarks
+                                        </Button>
+                                    </Link>
+                                    <Link href="/settings" onClick={() => setOpen(false)}>
+                                        <Button
+                                            variant={pathname === '/settings' ? 'default' : 'ghost'}
+                                            className="w-full justify-start gap-2"
+                                        >
+                                            <Settings className="h-4 w-4" />
+                                            Account Settings
                                         </Button>
                                     </Link>
                                 </div>

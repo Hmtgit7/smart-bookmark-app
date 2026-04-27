@@ -10,7 +10,8 @@ A modern, AI-powered bookmark manager built with **Next.js 16** and **Supabase**
 
 ### Core Features
 
-- 🔐 **Google OAuth Authentication** — Secure sign-in with your Google account
+- 🔐 **Google OAuth + Email Password Authentication** — Sign in with Google or a password
+- ⚙️ **Account Settings** — Set a password or permanently delete your account
 - ⚡ **Real-time Sync** — Changes appear instantly across all open tabs
 - 🔍 **Smart Search** — Quickly find bookmarks by title or URL
 - 🏷️ **Categories** — Organize bookmarks with predefined or custom categories
@@ -51,12 +52,12 @@ A modern, AI-powered bookmark manager built with **Next.js 16** and **Supabase**
 
 ### Backend
 
-| Technology            | Role            |
-| --------------------- | --------------- |
-| Supabase (PostgreSQL) | Database        |
-| Supabase Auth         | Google OAuth    |
-| Supabase Realtime     | Live sync       |
-| Row Level Security    | Data protection |
+| Technology            | Role                          |
+| --------------------- | ----------------------------- |
+| Supabase (PostgreSQL) | Database                      |
+| Supabase Auth         | Google OAuth + email/password |
+| Supabase Realtime     | Live sync                     |
+| Row Level Security    | Data protection               |
 
 ### AI & ML
 
@@ -157,11 +158,12 @@ CREATE INDEX idx_bookmarks_archived ON bookmarks(user_id, archived);
 CREATE INDEX idx_bookmarks_category ON bookmarks(user_id, category);
 ```
 
-### 5. Configure Google OAuth
+### 5. Configure Authentication Providers
 
-1. In your Supabase dashboard, go to **Authentication → Providers → Google**
-2. Add your **Google Client ID** and **Client Secret**
-3. Add the authorized redirect URI:
+1. In your Supabase dashboard, go to **Authentication → Providers**
+2. Enable **Google** and add your **Google Client ID** and **Client Secret**
+3. Make sure **Email** sign-in is enabled if you want password login
+4. Add the authorized redirect URI:
     ```
     http://localhost:3000/auth/callback
     ```
