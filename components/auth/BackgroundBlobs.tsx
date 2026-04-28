@@ -1,3 +1,6 @@
+{
+    /* Background Blobs */
+}
 export function BackgroundBlobs() {
     return (
         <>
