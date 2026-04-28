@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import { Bookmark, Globe, Lock, Pin, Archive, TrendingUp, Loader2 } from 'lucide-react';
+import { Bookmark, Globe, Lock, Pin, Archive, TrendingUp } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { Navbar } from '@/components/layout/Navbar';
 import { ChatBot } from '@/components/chat/ChatBot';
@@ -12,16 +12,68 @@ import { CategoryBreakdown } from '@/components/dashboard/CategoryBreakdown';
 import { TopTags } from '@/components/dashboard/TopTags';
 import { PinnedBookmarks } from '@/components/dashboard/PinnedBookmarks';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /* ──────────────────────────────────────────────────────────
    Loading skeleton shown while the async content streams in
    ────────────────────────────────────────────────────────── */
 function DashboardSkeleton() {
     return (
-        <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm">Loading your dashboard…</p>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+            <div className="flex items-center justify-between gap-4">
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-44" />
+                    <Skeleton className="h-4 w-72 max-w-full" />
+                </div>
+                <Skeleton className="h-10 w-40 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="rounded-xl border bg-card p-5 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 space-y-3">
+                                <Skeleton className="h-3 w-20" />
+                                <Skeleton className="h-8 w-14" />
+                                <Skeleton className="h-3 w-24" />
+                            </div>
+                            <Skeleton className="h-11 w-11 rounded-xl shrink-0" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(320px,1fr)]">
+                <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-4">
+                    <Skeleton className="h-5 w-40" />
+                    <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                            <div
+                                key={index}
+                                className="rounded-lg border bg-muted/20 p-4 space-y-3"
+                            >
+                                <Skeleton className="h-4 w-3/4" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-1/2" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-4">
+                    <Skeleton className="h-5 w-32" />
+                    <div className="space-y-3">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                            <div key={index} className="flex items-center gap-3">
+                                <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+                                <div className="min-w-0 flex-1 space-y-2">
+                                    <Skeleton className="h-4 w-5/6" />
+                                    <Skeleton className="h-3 w-2/3" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );
