@@ -124,6 +124,8 @@
 //   );
 // }
 
+{/* Signup Page */ }
+
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import { AuthNavbar, BackgroundBlobs, LoginHeroSection, SignupCard } from '@/components/auth';
