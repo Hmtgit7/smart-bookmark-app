@@ -1,11 +1,30 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import {
+    createPrivateResetReauthToken,
+    getPrivateResetReauthCookieOptions,
+    PRIVATE_RESET_REAUTH_COOKIE,
+} from '@/lib/security/private-reset-reauth';
+
+function sanitizeNextPath(nextPath: string | null): string {
+    if (!nextPath || !nextPath.startsWith('/')) {
+        return '/dashboard';
+    }
+
+    if (nextPath.startsWith('//')) {
+        return '/dashboard';
+    }
+
+    return nextPath;
+}
 
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
     const error = requestUrl.searchParams.get('error');
     const error_description = requestUrl.searchParams.get('error_description');
+    const nextPath = sanitizeNextPath(requestUrl.searchParams.get('next'));
+    const reauthType = requestUrl.searchParams.get('reauth');
     const origin = requestUrl.origin;
 
     // Handle OAuth errors
@@ -26,7 +45,18 @@ export async function GET(request: Request) {
             }
 
             if (data.session) {
-                return NextResponse.redirect(`${origin}/dashboard`);
+                const response = NextResponse.redirect(`${origin}${nextPath}`);
+
+                if (reauthType === 'private' && data.session.user) {
+                    const token = createPrivateResetReauthToken(data.session.user.id, 'google');
+                    response.cookies.set(
+                        PRIVATE_RESET_REAUTH_COOKIE,
+                        token,
+                        getPrivateResetReauthCookieOptions()
+                    );
+                }
+
+                return response;
             }
         } catch {
             return NextResponse.redirect(`${origin}/login?error=Authentication failed`);

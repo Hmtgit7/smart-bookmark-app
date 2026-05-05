@@ -2,6 +2,13 @@
 
 import { createClient } from '@/lib/supabase/server';
 import * as crypto from 'crypto';
+import { cookies } from 'next/headers';
+import {
+    createPrivateResetReauthToken,
+    getPrivateResetReauthCookieOptions,
+    PRIVATE_RESET_REAUTH_COOKIE,
+    verifyPrivateResetReauthToken,
+} from '@/lib/security/private-reset-reauth';
 
 function hashPassword(password: string): string {
     return crypto.createHash('sha256').update(password).digest('hex');
@@ -260,7 +267,7 @@ export async function togglePrivateBookmarkAction(bookmarkId: string, password: 
             if (!existingHash || !timingSafeCompare(hashedPassword, existingHash)) {
                 return {
                     success: false,
-                    error: 'Incorrect password. Use the same password as your other private bookmarks.',
+                    error: 'Incorrect password. Use the same password as your other private bookmarks, or reset it from the Private page.',
                 };
             }
         }
@@ -332,8 +339,141 @@ export async function verifyPrivateAccessAction(password: string) {
     const isValid = timingSafeCompare(hashedPassword, storedHash);
 
     if (!isValid) {
-        return { error: 'Incorrect password', verified: false };
+        return {
+            error: 'Incorrect password. If you forgot it, use the secure reset flow from the Private page.',
+            verified: false,
+        };
     }
 
     return { success: true, message: 'Password verified!', verified: true };
+}
+
+export async function verifyAccountPasswordForPrivateResetAction(accountPassword: string) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    if (!user.email) {
+        return {
+            success: false,
+            error: 'No account email found. Please re-authenticate with Google.',
+        };
+    }
+
+    if (!accountPassword) {
+        return { success: false, error: 'Account password is required' };
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: accountPassword,
+    });
+
+    if (error) {
+        return {
+            success: false,
+            error: 'Incorrect account password. If you use Google login only, choose Google re-auth.',
+        };
+    }
+
+    const cookieStore = await cookies();
+    const token = createPrivateResetReauthToken(user.id, 'password');
+    cookieStore.set(PRIVATE_RESET_REAUTH_COOKIE, token, getPrivateResetReauthCookieOptions());
+
+    return { success: true, message: 'Re-authentication verified.' };
+}
+
+export async function resetPrivateBookmarkPasswordAction(newPassword: string) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Unauthorized' };
+    }
+
+    if (!newPassword || newPassword.length < 4) {
+        return { success: false, error: 'Password must be at least 4 characters' };
+    }
+
+    const cookieStore = await cookies();
+    const reauthToken = cookieStore.get(PRIVATE_RESET_REAUTH_COOKIE)?.value;
+
+    if (!verifyPrivateResetReauthToken(reauthToken, user.id)) {
+        return {
+            success: false,
+            error: 'Re-authentication expired. Please verify again to reset private password.',
+        };
+    }
+
+    const { data: hasPrivate } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_private', true)
+        .limit(1);
+
+    if (!hasPrivate || hasPrivate.length === 0) {
+        return { success: false, error: 'No private bookmarks found to reset password.' };
+    }
+
+    const hashedPassword = hashPassword(newPassword);
+
+    const { error } = await supabase
+        .from('bookmarks')
+        .update({ private_password_hash: hashedPassword })
+        .eq('user_id', user.id)
+        .eq('is_private', true);
+
+    if (error) {
+        return { success: false, error: 'Failed to reset private bookmark password.' };
+    }
+
+    cookieStore.set(PRIVATE_RESET_REAUTH_COOKIE, '', {
+        ...getPrivateResetReauthCookieOptions(),
+        maxAge: 0,
+    });
+
+    return {
+        success: true,
+        message: 'Private bookmark password has been reset successfully.',
+    };
+}
+
+export async function getPrivatePasswordResetStatusAction() {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return {
+            success: false,
+            error: 'Unauthorized',
+            hasPrivateBookmarks: false,
+            canReset: false,
+        };
+    }
+
+    const { data: privateBookmarks } = await supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_private', true)
+        .limit(1);
+
+    const cookieStore = await cookies();
+    const reauthToken = cookieStore.get(PRIVATE_RESET_REAUTH_COOKIE)?.value;
+
+    return {
+        success: true,
+        hasPrivateBookmarks: !!(privateBookmarks && privateBookmarks.length > 0),
+        canReset: verifyPrivateResetReauthToken(reauthToken, user.id),
+    };
 }

@@ -41,6 +41,32 @@ export async function signInWithGoogleAction() {
     }
 }
 
+export async function startPrivatePasswordResetWithGoogleAction(
+    nextPath = '/private?resetPrivate=1'
+) {
+    const supabase = await createClient();
+    const origin = getOrigin();
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}&reauth=private`,
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'login',
+            },
+        },
+    });
+
+    if (error) {
+        redirectWithError('/private', 'Could not start Google re-authentication');
+    }
+
+    if (data.url) {
+        redirect(data.url);
+    }
+}
+
 export async function signUpAction(formData: FormData) {
     const email = String(formData.get('email') || '').trim();
     const password = String(formData.get('password') || '');
@@ -129,6 +155,58 @@ export async function updatePasswordAction(formData: FormData) {
     }
 
     redirectWithSuccess('/settings', 'Password updated successfully');
+}
+
+export async function updatePasswordWithCurrentPasswordAction(formData: FormData) {
+    const currentPassword = String(formData.get('currentPassword') || '');
+    const password = String(formData.get('password') || '');
+    const confirmPassword = String(formData.get('confirmPassword') || '');
+
+    if (!currentPassword) {
+        return { success: false, error: 'Current password is required' };
+    }
+
+    if (password.length < 8) {
+        return { success: false, error: 'Password must be at least 8 characters' };
+    }
+
+    if (password !== confirmPassword) {
+        return { success: false, error: 'Passwords do not match' };
+    }
+
+    if (password === currentPassword) {
+        return { success: false, error: 'New password must be different from current password' };
+    }
+
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, error: 'Please sign in again' };
+    }
+
+    if (!user.email) {
+        return { success: false, error: 'Could not verify account email. Please sign in again.' };
+    }
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+    });
+
+    if (verifyError) {
+        return { success: false, error: 'Current password is incorrect' };
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+        return { success: false, error: error.message || 'Could not update password' };
+    }
+
+    return { success: true, message: 'Password updated successfully' };
 }
 
 export async function deleteAccountAction(formData: FormData) {

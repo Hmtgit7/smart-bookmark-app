@@ -23,6 +23,8 @@ interface PrivatePasswordDialogProps {
     description: string;
     onConfirm: (password: string) => Promise<void>;
     buttonText?: string;
+    secondaryActionText?: string;
+    onSecondaryAction?: () => void;
 }
 
 export function PrivatePasswordDialog({
@@ -33,6 +35,8 @@ export function PrivatePasswordDialog({
     description,
     onConfirm,
     buttonText,
+    secondaryActionText,
+    onSecondaryAction,
 }: PrivatePasswordDialogProps) {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -170,6 +174,18 @@ export function PrivatePasswordDialog({
                             {isLoading ? 'Please wait...' : buttonText || defaultButtonText}
                         </Button>
                     </DialogFooter>
+
+                    {mode === 'verify' && secondaryActionText && onSecondaryAction && (
+                        <div className="pt-1 text-center">
+                            <button
+                                type="button"
+                                onClick={onSecondaryAction}
+                                className="text-sm text-primary hover:underline"
+                            >
+                                {secondaryActionText}
+                            </button>
+                        </div>
+                    )}
                 </form>
             </DialogContent>
         </Dialog>

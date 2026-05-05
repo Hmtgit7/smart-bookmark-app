@@ -1,17 +1,36 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';
 import { PrivatePasswordDialog } from '@/components/bookmarks/PrivatePasswordDialog';
 import { useBookmarkStore } from '@/lib/stores/bookmark-store';
-import { verifyPrivateAccessAction } from '@/app/actions/bookmarks';
+import {
+    getPrivatePasswordResetStatusAction,
+    resetPrivateBookmarkPasswordAction,
+    verifyAccountPasswordForPrivateResetAction,
+    verifyPrivateAccessAction,
+} from '@/app/actions/bookmarks';
 import { toast } from 'sonner';
 import { Lock, Loader2, ShieldAlert } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { startPrivatePasswordResetWithGoogleAction } from '@/app/actions/auth';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function PrivatePage() {
+    const searchParams = useSearchParams();
     const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
 
     // ✅ FIX: Separate auth loading (one-time) from vault lock state
@@ -21,6 +40,14 @@ export default function PrivatePage() {
 
     const [showPasswordDialog, setShowPasswordDialog] = useState(false);
     const [isUnlockedThisSession, setIsUnlockedThisSession] = useState(false);
+    const [showResetMethodDialog, setShowResetMethodDialog] = useState(false);
+    const [showAccountPasswordDialog, setShowAccountPasswordDialog] = useState(false);
+    const [showSetNewPrivatePasswordDialog, setShowSetNewPrivatePasswordDialog] = useState(false);
+    const [accountPassword, setAccountPassword] = useState('');
+    const [resetFlowError, setResetFlowError] = useState('');
+    const [isVerifyingAccountPassword, setIsVerifyingAccountPassword] = useState(false);
+    const [isStartingGoogleReauth, setIsStartingGoogleReauth] = useState(false);
+    const [resetStatus, setResetStatus] = useState({ hasPrivateBookmarks: false, canReset: false });
 
     // Ref tracks unlock state synchronously — avoids stale closures in event listeners
     const isVerifiedRef = useRef(false);
@@ -29,6 +56,19 @@ export default function PrivatePage() {
 
     const setShowPrivateOnly = useBookmarkStore((s) => s.setShowPrivateOnly);
     const router = useRouter();
+
+    const refreshResetStatus = useCallback(async () => {
+        const result = await getPrivatePasswordResetStatusAction();
+
+        if (!result.success) {
+            return;
+        }
+
+        setResetStatus({
+            hasPrivateBookmarks: result.hasPrivateBookmarks,
+            canReset: result.canReset,
+        });
+    }, []);
 
     // ─── Shared lock helper ───────────────────────────────────────────────────
     const lockVault = useCallback(
@@ -63,6 +103,7 @@ export default function PrivatePage() {
             userLoadedRef.current = true;
             setUser(user);
             setIsAuthLoading(false); // ✅ Only set false once — never flip back to true
+            await refreshResetStatus();
 
             // Check if user has any private bookmarks at all
             const { data: privateBookmarks } = await supabase
@@ -80,7 +121,18 @@ export default function PrivatePage() {
         };
 
         checkAuth();
-    }, [router]);
+    }, [refreshResetStatus, router]);
+
+    useEffect(() => {
+        if (!userLoadedRef.current) return;
+
+        if (searchParams.get('resetPrivate') === '1') {
+            refreshResetStatus().then(() => {
+                setShowSetNewPrivatePasswordDialog(true);
+            });
+            router.replace('/private');
+        }
+    }, [refreshResetStatus, router, searchParams]);
 
     // ─── Tab visibility auto-lock ─────────────────────────────────────────────
     useEffect(() => {
@@ -159,6 +211,70 @@ export default function PrivatePage() {
             return;
         }
         setShowPasswordDialog(open);
+    };
+
+    const startResetFlow = async () => {
+        const result = await getPrivatePasswordResetStatusAction();
+
+        if (!result.success) {
+            toast.error(result.error || 'Unable to start reset flow.');
+            return;
+        }
+
+        if (!result.hasPrivateBookmarks) {
+            toast.info('You do not have private bookmarks to reset.');
+            return;
+        }
+
+        setResetStatus({
+            hasPrivateBookmarks: result.hasPrivateBookmarks,
+            canReset: result.canReset,
+        });
+
+        if (result.canReset) {
+            setShowSetNewPrivatePasswordDialog(true);
+            return;
+        }
+
+        setShowResetMethodDialog(true);
+    };
+
+    const handleVerifyAccountPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setResetFlowError('');
+
+        setIsVerifyingAccountPassword(true);
+        try {
+            const result = await verifyAccountPasswordForPrivateResetAction(accountPassword);
+            if (!result.success) {
+                setResetFlowError(result.error || 'Verification failed');
+                return;
+            }
+
+            setAccountPassword('');
+            setShowAccountPasswordDialog(false);
+            await refreshResetStatus();
+            setShowSetNewPrivatePasswordDialog(true);
+            toast.success(result.message || 'Re-authentication successful.');
+        } finally {
+            setIsVerifyingAccountPassword(false);
+        }
+    };
+
+    const handleGoogleReauthStart = async () => {
+        setIsStartingGoogleReauth(true);
+        await startPrivatePasswordResetWithGoogleAction();
+    };
+
+    const handleSetNewPrivatePassword = async (newPassword: string) => {
+        const result = await resetPrivateBookmarkPasswordAction(newPassword);
+
+        if (!result.success) {
+            throw new Error(result.error || 'Could not reset private bookmark password.');
+        }
+
+        await refreshResetStatus();
+        toast.success(result.message || 'Private password reset successfully.');
     };
 
     // ─── Render: Auth loading (one-time only, never on tab return) ────────────
@@ -244,6 +360,121 @@ export default function PrivatePage() {
                 description="Enter the password you set for your private bookmarks."
                 buttonText="Unlock Private Bookmarks"
                 onConfirm={handlePasswordVerification}
+                secondaryActionText={
+                    resetStatus.hasPrivateBookmarks
+                        ? resetStatus.canReset
+                            ? 'Continue private password reset'
+                            : 'Forgot private password? Reset securely'
+                        : undefined
+                }
+                onSecondaryAction={() => {
+                    setShowPasswordDialog(false);
+                    void startResetFlow();
+                }}
+            />
+
+            <Dialog open={showResetMethodDialog} onOpenChange={setShowResetMethodDialog}>
+                <DialogContent className="sm:max-w-[480px]">
+                    <DialogHeader>
+                        <DialogTitle>Re-authenticate to reset private password</DialogTitle>
+                        <DialogDescription>
+                            For security, verify your identity again before changing the private
+                            bookmark password.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-3">
+                        <Button
+                            className="w-full"
+                            onClick={handleGoogleReauthStart}
+                            disabled={isStartingGoogleReauth}
+                        >
+                            {isStartingGoogleReauth
+                                ? 'Redirecting to Google...'
+                                : 'Continue with Google re-authentication'}
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                                setShowResetMethodDialog(false);
+                                setResetFlowError('');
+                                setShowAccountPasswordDialog(true);
+                            }}
+                        >
+                            Verify with account password
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={showAccountPasswordDialog}
+                onOpenChange={(open) => {
+                    setShowAccountPasswordDialog(open);
+                    if (!open) {
+                        setAccountPassword('');
+                        setResetFlowError('');
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-[420px]">
+                    <DialogHeader>
+                        <DialogTitle>Verify account password</DialogTitle>
+                        <DialogDescription>
+                            Enter your account password to confirm this reset request.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleVerifyAccountPassword} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="accountPassword">Account password</Label>
+                            <Input
+                                id="accountPassword"
+                                type="password"
+                                value={accountPassword}
+                                onChange={(e) => setAccountPassword(e.target.value)}
+                                autoComplete="current-password"
+                                required
+                            />
+                        </div>
+
+                        {resetFlowError && (
+                            <Alert variant="destructive">
+                                <AlertDescription>{resetFlowError}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setShowAccountPasswordDialog(false);
+                                    setAccountPassword('');
+                                    setResetFlowError('');
+                                }}
+                                disabled={isVerifyingAccountPassword}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isVerifyingAccountPassword}>
+                                {isVerifyingAccountPassword ? 'Verifying...' : 'Verify'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <PrivatePasswordDialog
+                open={showSetNewPrivatePasswordDialog}
+                onOpenChange={setShowSetNewPrivatePasswordDialog}
+                mode="set"
+                title="Set a new private bookmark password"
+                description="This will update the password for all your private bookmarks."
+                buttonText="Reset private password"
+                onConfirm={handleSetNewPrivatePassword}
             />
         </div>
     );
