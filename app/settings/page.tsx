@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { AlertTriangle, KeyRound, Trash2 } from 'lucide-react';
+import { Suspense } from 'react';
+import { AlertTriangle, KeyRound, Trash2, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { AuthNavbar } from '@/components/auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -136,10 +137,25 @@ async function SettingsContent({
     );
 }
 
+function SettingsLoading() {
+    return (
+        <>
+            <AuthNavbar />
+            <main className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </main>
+        </>
+    );
+}
+
 export default function SettingsPage({
     searchParams,
 }: {
     searchParams: Promise<{ error?: string; success?: string }>;
 }) {
-    return <SettingsContent searchParams={searchParams} />;
+    return (
+        <Suspense fallback={<SettingsLoading />}>
+            <SettingsContent searchParams={searchParams} />
+        </Suspense>
+    );
 }
