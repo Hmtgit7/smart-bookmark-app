@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { BookmarkList } from '@/components/bookmarks/BookmarkList';
 import { PrivatePasswordDialog } from '@/components/bookmarks/PrivatePasswordDialog';
@@ -30,7 +30,6 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function PrivatePage() {
-    const searchParams = useSearchParams();
     const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
 
     // ✅ FIX: Separate auth loading (one-time) from vault lock state
@@ -61,13 +60,15 @@ export default function PrivatePage() {
         const result = await getPrivatePasswordResetStatusAction();
 
         if (!result.success) {
-            return;
+            return result;
         }
 
         setResetStatus({
             hasPrivateBookmarks: result.hasPrivateBookmarks,
             canReset: result.canReset,
         });
+
+        return result;
     }, []);
 
     // ─── Shared lock helper ───────────────────────────────────────────────────
@@ -103,7 +104,7 @@ export default function PrivatePage() {
             userLoadedRef.current = true;
             setUser(user);
             setIsAuthLoading(false); // ✅ Only set false once — never flip back to true
-            await refreshResetStatus();
+            const resetStatusResult = await refreshResetStatus();
 
             // Check if user has any private bookmarks at all
             const { data: privateBookmarks } = await supabase
@@ -114,7 +115,11 @@ export default function PrivatePage() {
                 .limit(1);
 
             if (privateBookmarks && privateBookmarks.length > 0) {
-                setShowPasswordDialog(true);
+                if (resetStatusResult?.success && resetStatusResult.canReset) {
+                    setShowSetNewPrivatePasswordDialog(true);
+                } else {
+                    setShowPasswordDialog(true);
+                }
             } else {
                 toast.info("You don't have any private bookmarks yet!");
             }
@@ -122,17 +127,6 @@ export default function PrivatePage() {
 
         checkAuth();
     }, [refreshResetStatus, router]);
-
-    useEffect(() => {
-        if (!userLoadedRef.current) return;
-
-        if (searchParams.get('resetPrivate') === '1') {
-            refreshResetStatus().then(() => {
-                setShowSetNewPrivatePasswordDialog(true);
-            });
-            router.replace('/private');
-        }
-    }, [refreshResetStatus, router, searchParams]);
 
     // ─── Tab visibility auto-lock ─────────────────────────────────────────────
     useEffect(() => {
